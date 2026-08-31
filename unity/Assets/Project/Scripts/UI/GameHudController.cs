@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class DefaultStuff : MonoBehaviour
+public class GameHudController : MonoBehaviour
 {
     public TextMeshProUGUI fpsText;
     private float timer;

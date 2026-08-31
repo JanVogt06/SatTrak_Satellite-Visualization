@@ -6740,7 +6740,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 308697199}
-        m_TargetAssemblyTypeName: DefaultStuff, Assembly-CSharp
+        m_TargetAssemblyTypeName: GameHudController, Assembly-CSharp
         m_MethodName: InfoPanelOpener
         m_Mode: 1
         m_Arguments:
@@ -8646,7 +8646,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 308697199}
-        m_TargetAssemblyTypeName: DefaultStuff, Assembly-CSharp
+        m_TargetAssemblyTypeName: GameHudController, Assembly-CSharp
         m_MethodName: PlayAnimation
         m_Mode: 1
         m_Arguments:
@@ -15225,7 +15225,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 308697199}
-        m_TargetAssemblyTypeName: DefaultStuff, Assembly-CSharp
+        m_TargetAssemblyTypeName: GameHudController, Assembly-CSharp
         m_MethodName: PlayUITwoOUT
         m_Mode: 1
         m_Arguments:
@@ -18700,7 +18700,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 308697199}
-        m_TargetAssemblyTypeName: DefaultStuff, Assembly-CSharp
+        m_TargetAssemblyTypeName: GameHudController, Assembly-CSharp
         m_MethodName: PlayUIOneOUT
         m_Mode: 1
         m_Arguments:
@@ -19516,7 +19516,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 308697199}
-        m_TargetAssemblyTypeName: DefaultStuff, Assembly-CSharp
+        m_TargetAssemblyTypeName: GameHudController, Assembly-CSharp
         m_MethodName: SwitchToMenu
         m_Mode: 1
         m_Arguments:
@@ -23786,7 +23786,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 308697199}
-        m_TargetAssemblyTypeName: DefaultStuff, Assembly-CSharp
+        m_TargetAssemblyTypeName: GameHudController, Assembly-CSharp
         m_MethodName: PlayBackAnimation
         m_Mode: 1
         m_Arguments:

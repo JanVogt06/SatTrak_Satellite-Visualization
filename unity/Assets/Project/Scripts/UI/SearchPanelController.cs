@@ -92,7 +92,7 @@ public class SearchPanelController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI periodValue;
     [SerializeField] private TextMeshProUGUI bStarValue;
 
-    public DefaultStuff infoPanelAnimation;
+    public GameHudController infoPanelAnimation;
 
     public GameObject famousInfoPanel;
     public TextMeshProUGUI famousInfoText;
