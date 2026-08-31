@@ -15,7 +15,7 @@ The goal is to publish it as a WebGL build served from a container, installable 
 | --- | --- |
 | Unity | 2022.3.62f3 |
 | Runs in the editor | yes, no account or API key needed |
-| WebGL build | **never attempted yet** — the WebGL module is not installed |
+| WebGL build | first attempt in progress; the WebGL module is installed |
 | Docker / CI | not started |
 | Blocking issue | `cities.json` allocates ~700 MB of heap at startup |
 
@@ -120,9 +120,8 @@ SGP4 models this, so it is not raw error, but the model's uncertainty grows the 
 because drag depends on solar activity. This is why the container refreshes the file every
 two hours rather than relying on the release cadence.
 
-**The committed snapshot currently holds only 21 objects** (the CelesTrak `stations` group),
-not the full catalogue, because the IP was blocked when it was created. Run
-`tools/update-tle-snapshot.sh` once and commit the result.
+The committed snapshot holds the full active catalogue, 16046 element sets. Refresh it
+before a release so the bundled fallback is not stale.
 
 ## What is left to do
 
@@ -165,8 +164,8 @@ only costs clone time. Left in place deliberately.
 
 ### 2. First browser build
 
-- Install the WebGL module through Unity Hub and switch the build target. The first import
-  takes a long time because every texture is recompressed.
+- The WebGL module is installed. The first build recompresses every texture and takes a
+  long time.
 - Player settings: compression format Brotli, exception support *Explicitly Thrown*, data
   caching on, decompression fallback **off** — the server sets the headers itself.
 - Desktop-only APIs need handling: `Application.Quit()` does nothing in a browser
