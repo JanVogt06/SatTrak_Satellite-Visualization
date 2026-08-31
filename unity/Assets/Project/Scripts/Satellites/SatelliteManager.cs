@@ -2,8 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using Assets.SimpleSpinner;
 using CesiumForUnity;
 using Heatmap;
 using Satellites.SGP.Propagation;
@@ -23,6 +21,9 @@ namespace Satellites
         public static SatelliteManager Instance { get; private set; }
 
         private const string TleUrl = "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=TLE";
+        private const string TleCacheFileName = "cacheTle.txt";
+        private const int SatellitesPerFrame = 250;
+        private static readonly TimeSpan TleMaxAge = TimeSpan.FromHours(12);
 
         [Header("Prefabs & References")]
         public GameObject satellitePrefab;
@@ -69,6 +70,8 @@ namespace Satellites
 
         public bool satellitesActive = true;
 
+        private bool _ready;
+
         private Dictionary<int, GameObject> famousModelPrefabs;
 
         void Awake()
@@ -92,12 +95,16 @@ namespace Satellites
             };
 
             EnableGpuInstancing();
-            FetchTleData();
-            AllocateTransformAccessArray();
+            StartCoroutine(LoadSatellites());
         }
 
         private void Update()
         {
+            if (!_ready)
+            {
+                return;
+            }
+
             if (!satellitesActive)
             {
                 return;
@@ -161,36 +168,41 @@ namespace Satellites
             return _satellites;
         }
 
-        private void FetchTleData()
+        private IEnumerator LoadSatellites()
         {
-            try
+            Debug.Log($"[SatelliteManager] Downloading TLE data from {TleUrl}");
+
+            Dictionary<int, Tle> data = null;
+            var source = new TleSource(TleUrl, TleMaxAge, TleCacheFileName);
+
+            yield return source.Load(
+                tles => data = tles,
+                error => Debug.LogError($"[SatelliteManager] TLE download failed: {error}"));
+
+            if (data == null)
             {
-                Debug.Log($"[SatelliteManager] Downloading TLE data from {TleUrl}");
-
-                var provider = new CachingRemoteTleProvider(true, TimeSpan.FromHours(12), "cacheTle.txt", new Uri(TleUrl));
-                var data = provider.GetTles();
-
-                Debug.Log($"[SatelliteManager] Received {data.Count} TLE records");
-
-                if (data.Count == 0)
-                {
-                    Debug.LogError("[SatelliteManager] No TLE data received");
-                }
-
-                int modelledSatellites = 0;
-                foreach (var tle in data.Values)
-                {
-                    var modelApplied = CreateSatellite(tle);
-                    if (modelApplied) modelledSatellites++;
-                }
-
-                Debug.Log($"Initialized {_satellites.Count} satellites, {modelledSatellites} with models");
-                OnSatellitesLoaded?.Invoke(_satellites);
+                Debug.LogError("[SatelliteManager] No TLE data received");
+                yield break;
             }
-            catch (Exception e)
+
+            Debug.Log($"[SatelliteManager] Received {data.Count} TLE records");
+
+            int modelledSatellites = 0;
+            int created = 0;
+
+            foreach (var tle in data.Values)
             {
-                Debug.LogError($"[SatelliteManager] TLE download failed: {e.Message}\n{e.StackTrace}");
+                if (CreateSatellite(tle)) modelledSatellites++;
+
+                if (++created % SatellitesPerFrame == 0)
+                    yield return null;
             }
+
+            Debug.Log($"Initialized {_satellites.Count} satellites, {modelledSatellites} with models");
+            OnSatellitesLoaded?.Invoke(_satellites);
+
+            AllocateTransformAccessArray();
+            _ready = _transformAccessArray.isCreated;
         }
 
         private bool CreateSatellite(Tle tle)
@@ -200,8 +212,19 @@ namespace Satellites
             var satelliteGo = Instantiate(satellitePrefab, satelliteParent.transform);
             var satellite = satelliteGo.GetComponent<Satellite>();
 
-            var modelApplied = satellite.Init(tle, satelliteModelPrefabs, globalSpaceMaterial,
-                                             issModelPrefab, famousModelPrefabs);
+            bool modelApplied;
+            try
+            {
+                modelApplied = satellite.Init(tle, satelliteModelPrefabs, globalSpaceMaterial,
+                                              issModelPrefab, famousModelPrefabs);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[SatelliteManager] Skipped {tle.NoradNumber}: {e.Message}");
+                Destroy(satelliteGo);
+                return false;
+            }
+
             _satellites.Add(satellite);
             return modelApplied;
         }
@@ -266,7 +289,7 @@ namespace Satellites
                 return;
             }
 
-            Debug.Log($"Initialisiere TransformAccessArray mit {_satellites.Count} Satelliten");
+            Debug.Log($"Initializing TransformAccessArray with {_satellites.Count} satellites");
 
             _propagators = new NativeArray<Sgp4>(_satellites.Count, Allocator.Persistent);
             _currentPositions = new NativeArray<Vector3>(_satellites.Count, Allocator.Persistent);
@@ -279,7 +302,7 @@ namespace Satellites
             }
 
             _transformAccessArray = new TransformAccessArray(transforms);
-            Debug.Log("TransformAccessArray erfolgreich initialisiert");
+            Debug.Log("TransformAccessArray initialized");
         }
     }
 }
