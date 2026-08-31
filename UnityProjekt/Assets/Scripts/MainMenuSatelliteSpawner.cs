@@ -25,7 +25,7 @@ public class MainMenuSatelliteSpawner : MonoBehaviour
             var sat = satellites[i];
             if (sat != null)
             {
-                // Jeder Satellit rotiert um seine eigene zuf‰llige Achse
+                // Jeder Satellit rotiert um seine eigene zuf√§llige Achse
                 sat.transform.Rotate(rotationAxes[i] * rotationSpeed * Time.deltaTime, Space.Self);
             }
         }
@@ -52,7 +52,7 @@ public class MainMenuSatelliteSpawner : MonoBehaviour
             satellite.transform.LookAt(cam.position); // Optional: schaut zur Kamera
 
             satellites.Add(satellite);
-            rotationAxes.Add(Random.onUnitSphere); // zuf‰llige 3D-Achse speichern
+            rotationAxes.Add(Random.onUnitSphere); // zuf√§llige 3D-Achse speichern
         }
     }
 }

@@ -11,7 +11,7 @@ public sealed class FlyingUIPhysics : MonoBehaviour
     private Color[] palette =
         { Color.red, Color.green, Color.blue, Color.yellow };
     [SerializeField] private Vector2 speedRange = new(60f, 120f);
-    [SerializeField] private float randomAngle = 10f;          // °
+    [SerializeField] private float randomAngle = 10f;          // Â°
 
     private TextMeshProUGUI[] texts;
     private Image[] images;

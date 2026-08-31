@@ -21,13 +21,13 @@ public class CustomCursor : MonoBehaviour
             return;
         }
 
-        // Färbe das Original ein
+        // FÃ¤rbe das Original ein
         Texture2D coloredTexture = TintCursorTexture(CrosshairSettings.cursorTexture, CrosshairSettings.cursorColor);
 
         // Setze den Cursor
         Cursor.SetCursor(coloredTexture, hotspot, cursorMode);
 
-        // Speicher letztes Cursor-Texture um ggf. später zu löschen
+        // Speicher letztes Cursor-Texture um ggf. spÃ¤ter zu lÃ¶schen
         if (lastCursorTexture != null)
             Destroy(lastCursorTexture);
         lastCursorTexture = coloredTexture;

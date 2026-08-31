@@ -8,16 +8,16 @@ public class CrosshairSelector : MonoBehaviour
     public Image[] crosshairImages;              // Die Crosshair-Bildvorschau-Images
 
     [Header("Crosshair Farb-Auswahl")]
-    public Button[] colorButtons;                // Farbbuttons für Crosshair
-    public Color[] availableColors;              // Farbliste für beide Systeme
+    public Button[] colorButtons;                // Farbbuttons fÃ¼r Crosshair
+    public Color[] availableColors;              // Farbliste fÃ¼r beide Systeme
 
     [Header("Cursor Auswahl")]
-    public Button[] cursorButtons;               // Zwei Buttons für Cursor-Formen
+    public Button[] cursorButtons;               // Zwei Buttons fÃ¼r Cursor-Formen
     public Image[] cursorPreviewImages;          // Die kleinen Vorschau-Cursorbilder (UI)
-    public Texture2D[] cursorTextures;           // Die echten Texturen für Cursor.SetCursor()
+    public Texture2D[] cursorTextures;           // Die echten Texturen fÃ¼r Cursor.SetCursor()
 
     [Header("Cursor Farb-Auswahl")]
-    public Button[] cursorColorButtons;          // Farbbuttons speziell für den Cursor
+    public Button[] cursorColorButtons;          // Farbbuttons speziell fÃ¼r den Cursor
 
     public CustomCursor custCursor;
 

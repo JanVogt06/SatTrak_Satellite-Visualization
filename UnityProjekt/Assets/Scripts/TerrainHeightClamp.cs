@@ -8,10 +8,10 @@ public class TerrainHeightClamp : MonoBehaviour
     [Tooltip("Der GlobeAnchor an eurer Kamera")]
     public CesiumGlobeAnchor globeAnchor;
 
-    [Tooltip("Das Tileset, von dem wir die Höhe abfragen")]
+    [Tooltip("Das Tileset, von dem wir die HÃ¶he abfragen")]
     public Cesium3DTileset tileset;
 
-    [Tooltip("Minimale Höhe über dem Gelände (m)")]
+    [Tooltip("Minimale HÃ¶he Ã¼ber dem GelÃ¤nde (m)")]
     public float minAboveGround = 5f;
 
     [Tooltip("Abtastrate in Hz")]

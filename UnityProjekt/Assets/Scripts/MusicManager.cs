@@ -117,7 +117,7 @@ public class MusicManager : MonoBehaviour
     {
         if (audioSource == null)
         {
-            Debug.LogWarning("AudioSource ist null – MusicManager wurde vermutlich zerstört.");
+            Debug.LogWarning("AudioSource ist null â€“ MusicManager wurde vermutlich zerstÃ¶rt.");
             return;
         }
 

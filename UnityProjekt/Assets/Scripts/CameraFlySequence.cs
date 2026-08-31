@@ -2,8 +2,8 @@ using System.Collections;
 using UnityEngine;
 
 /// <summary>
-/// Fährt die Kamera vom rotierenden Start-Orbit zu einer festen UI-Nah­ansicht
-/// (Z-Koordinate = fixedTargetZ) und wieder zurück. Während des UI-Aufenthalts
+/// FÃ¤hrt die Kamera vom rotierenden Start-Orbit zu einer festen UI-NahÂ­ansicht
+/// (Z-Koordinate = fixedTargetZ) und wieder zurÃ¼ck. WÃ¤hrend des UI-Aufenthalts
 /// ist die Drehung deaktiviert.
 /// </summary>
 [RequireComponent(typeof(Camera))]
@@ -12,13 +12,13 @@ public sealed class CameraFlySequence : MonoBehaviour
     [Header("Ziel-Transform (X/Y-Position + Rotation)")]
     public Transform uiAnchor;
 
-    [Header("Fester Z-Wert für Nahansicht")]
+    [Header("Fester Z-Wert fÃ¼r Nahansicht")]
     public float fixedTargetZ = -987f;
 
-    [Header("Fahrtdauer hin- und zurück (s)")]
+    [Header("Fahrtdauer hin- und zurÃ¼ck (s)")]
     public float travelTime = 2.5f;
 
-    [Header("Glättung (0 = linear, 2–5 = weich)")]
+    [Header("GlÃ¤ttung (0 = linear, 2â€“5 = weich)")]
     [Range(0f, 5f)]
     public float smoothness = 2f;
 
@@ -35,10 +35,10 @@ public sealed class CameraFlySequence : MonoBehaviour
         startRot = transform.rotation;
     }
 
-    /* ---------- öffentliche Trigger ---------- */
+    /* ---------- Ã¶ffentliche Trigger ---------- */
 
     /// <summary>Startet die Fahrt zur UI-Ansicht.</summary>
-    /* ---------- Pufferspeicher für Rückfahrt ---------- */
+    /* ---------- Pufferspeicher fÃ¼r RÃ¼ckfahrt ---------- */
     private Vector3 orbitResumePos;
     private Quaternion orbitResumeRot;
 
@@ -52,7 +52,7 @@ public sealed class CameraFlySequence : MonoBehaviour
         /* 2) Zielkoordinate bilden (X/Y vom Anchor, fester Z) */
         Vector3 uiPos = uiAnchor.position;
         uiPos.z = fixedTargetZ;
-        uiPos.y = 1023f;                             // (falls gewünscht)
+        uiPos.y = 1023f;                             // (falls gewÃ¼nscht)
 
         /* 3) Coroutine mit **aktueller** Pose starten        */
         StartCoroutine(Fly(transform.position, transform.rotation,
@@ -60,7 +60,7 @@ public sealed class CameraFlySequence : MonoBehaviour
                            disableOrbit: true));
     }
 
-    /* ---------- Rückflug zur gespeicherten Orbit-Pose ---- */
+    /* ---------- RÃ¼ckflug zur gespeicherten Orbit-Pose ---- */
     public void FlyBack()
     {
         StartCoroutine(Fly(transform.position, transform.rotation,
@@ -81,7 +81,7 @@ public sealed class CameraFlySequence : MonoBehaviour
             t += Time.deltaTime / travelTime;
 
             /* NEU: kubische Ease-In-Out-Funktion                     */
-            /* 0 – 1-Bereich beibehalten, aber sanfter Start/Ende    */
+            /* 0 â€“ 1-Bereich beibehalten, aber sanfter Start/Ende    */
             float s = EaseInOutCubic(Mathf.Clamp01(t));
 
             transform.position = Vector3.Lerp(fromPos, toPos, s);
@@ -95,7 +95,7 @@ public sealed class CameraFlySequence : MonoBehaviour
     private static float EaseInOutCubic(float x)
     {
         return (x < 0.5f)
-            ? 4f * x * x * x                       // Beschleunigungs­phase
+            ? 4f * x * x * x                       // BeschleunigungsÂ­phase
             : 1f - Mathf.Pow(-2f * x + 2f, 3f) / 2f; // Abbremsphase
     }
 }
