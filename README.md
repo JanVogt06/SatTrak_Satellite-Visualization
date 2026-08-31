@@ -6,6 +6,9 @@ satellites on a textured globe.
 
 ![SatTrak](screenshots/main-view.png)
 
+New to the project? [HANDOFF.md](HANDOFF.md) has the current state, what changed and what
+is left to do, including the container and release plan.
+
 ## Status
 
 Cesium has been removed. The globe is a generated WGS84 ellipsoid mesh textured with NASA
@@ -76,6 +79,7 @@ Earth mode:
 ## Repository layout
 
 ```
+HANDOFF.md                    State of the project and open work
 screenshots/                  README image
 tools/                        Maintenance scripts
 unity/
