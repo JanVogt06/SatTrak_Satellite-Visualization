@@ -15,12 +15,14 @@ The goal is to publish it as a WebGL build served from a container, installable 
 | --- | --- |
 | Unity | 2022.3.62f3 |
 | Runs in the editor | yes, no account or API key needed |
-| WebGL build | first attempt in progress; the WebGL module is installed |
-| Docker / CI | files in place, never executed; Unity secrets missing |
-| Blocking issue | `cities.json` allocates ~700 MB of heap at startup |
+| WebGL build | works, 148 MB, about 6 minutes locally |
+| Container | built and tested locally, all headers verified |
+| Release | `v0.1.0` tagged, pipeline runs on `v*` tags |
+| Open blocker | Unity Localization uses synchronous Addressables, which WebGL rejects |
 
-The two things that used to block a browser build are done: Cesium is gone, and the TLE
-loading path no longer uses APIs that WebGL lacks.
+Cesium is gone, the TLE path no longer uses APIs WebGL lacks, and the asset budget has been
+cut far enough that the build loads in a browser. It has been verified end to end: the image
+serves the build, the player starts, the main menu responds and the game scene loads.
 
 ## Getting it running
 
@@ -38,7 +40,7 @@ Add `unity/` as a project in Unity Hub. There is no token or config file to fill
 
 ## What changed
 
-Roughly 35 commits, in three blocks.
+54 commits, in four blocks.
 
 **Cleanup.** The repository was restructured: `unity/Assets/Project` holds everything
 written for this project, `unity/Assets/ThirdParty` holds vendored assets. Dead code and
@@ -73,6 +75,9 @@ agreement to 0.0000 mm, determinant −1.000, and the earth centre lands at
 65536 globe triangles, 65024 face outward, 0 face inward and 512 are degenerate (the poles).
 
 **TLE data flow.** See the next section.
+
+**Shipping.** The asset budget was cut, the container and the release pipeline were built and
+`v0.1.0` was tagged. See the two sections after that.
 
 ## How TLE data reaches the app
 
@@ -123,120 +128,101 @@ two hours rather than relying on the release cadence.
 The committed snapshot holds the full active catalogue, 16046 element sets. Refresh it
 before a release so the bundled fallback is not stale.
 
-## What is left to do
+## How a release works
 
-### 1. Memory budget — blocks everything else
-
-Unity WebGL compiles to wasm32, the address space is capped, and the `.data` file is loaded
-into memory in full. The current asset budget does not survive a browser.
-
-**`cities.json` is the blocker.** It holds 2,191,856 entries — the full GeoNames gazetteer,
-not the "over 1000 cities" the old README claimed. `GeoNamesSearchFromJSON.Awake()` builds,
-synchronously:
-
-| Step | Cost |
-| --- | --- |
-| `geoJson.text` | 189 MB UTF-8 becomes a ~378 MB UTF-16 string |
-| `JsonUtility.FromJson` | 2.19 M objects plus 2.19 M name strings |
-| `e.nameLower = ToLowerInvariant()` | a second copy of every name |
-| `_lookup[e.name] = e` | a 2.19 M entry dictionary |
-| `_nameAsc`, `_nameDesc`, `_filtered` | three more 2.19 M element lists |
-
-Peak is roughly 700 MB of managed heap. Two ways forward:
-
-- **Keep every place.** Convert to a binary format (name blob plus two `float32`), read into
-  a `NativeArray` instead of 2.19 M heap objects, drop `nameLower` in favour of a
-  case-insensitive comparison, and replace the three materialized lists with index arrays.
-  Estimated one to two days.
-- **Filter.** Keep places above ~5000 inhabitants, roughly 50000 entries. Search still works
-  worldwide, only hamlets disappear. Estimated one hour.
-
-This decision is still open.
-
-**Audio and help images are import settings, not code.** The source files stay as they are;
-Unity re-encodes at build time. In the inspector: audio clips to Vorbis, quality ~50, load
-type Streaming (179 MB of MP3 today), and `Project/Resources/HelpImages` to max size 1024
-(50 MB today, and everything under a `Resources` folder ships whether it is used or not —
-one screenshot alone is 9.2 MB).
-
-`ThirdParty/Skyboxes` is 203 MB and completely unreferenced. It never enters a build, so it
-only costs clone time. Left in place deliberately.
-
-### 2. First browser build
-
-- The WebGL module is installed. The first build recompresses every texture and takes a
-  long time.
-- Player settings: compression format Brotli, exception support *Explicitly Thrown*, data
-  caching on, decompression fallback **off** — the server sets the headers itself.
-- Desktop-only APIs need handling: `Application.Quit()` does nothing in a browser
-  (`MenuManager.cs:135`, `SceneSwitcher.cs:76`, `GameHudController.cs:65`), and
-  `Screen.resolutions` / `Screen.SetResolution` are meaningless
-  (`MenuManager.cs:230`, `MenuManager.cs:257`). Hide the affected buttons and the resolution
-  menu.
-- WebGL is single-threaded, so Burst jobs run serially. With 5000 satellites,
-  `MoveSatelliteJobParallelForTransform` is the first place to look if the frame rate is
-  poor. Measure before optimizing.
-
-### 3. Ship it
-
-The container and the release workflow already exist. What is missing is the Unity licence
-in CI and a real end-to-end run.
-
-| File | Purpose |
-| --- | --- |
-| `Dockerfile` | `nginx:stable-alpine`, copies `build/WebGL/SatTrak/` into the web root |
-| `docker/default.conf` | Brotli and gzip headers for `.wasm`, `.js` and `.data`, `/healthz`, the TLE location |
-| `docker/entrypoint.sh` | Seeds the TLE file from the bundled snapshot, refreshes it every two hours |
-| `docker-compose.yml` | GHCR image, port via `SATTRAK_PORT` (default 8003), healthcheck |
-| `.dockerignore` | Keeps `unity/Library` out of the build context — it is 6.7 GB |
-| `.github/workflows/release.yml` | `v*` tag builds WebGL with GameCI and pushes to GHCR |
-
-The entrypoint only replaces the served TLE file when the response passes the three-line
-format check, so a throttled or failed request leaves the previous copy in place. Set
-`TLE_REFRESH_SECONDS=0` to disable refreshing entirely.
-
-Three things still to do:
-
-- **Repository secrets.** GameCI needs `UNITY_EMAIL`, `UNITY_PASSWORD` and `UNITY_LICENSE`.
-  Without them the release job fails at the build step. To produce the licence:
-
-  1. Run the `Unity activation` workflow manually from the Actions tab. It attaches an
-     artifact containing a `.alf` file.
-  2. Upload that `.alf` at <https://license.unity3d.com/manual> and download the `.ulf`
-     that comes back.
-  3. Store the full text of the `.ulf` as the `UNITY_LICENSE` secret, plus the Unity
-     account address and password as `UNITY_EMAIL` and `UNITY_PASSWORD`.
-
-  With a Pro or Plus licence the flow is different: use `UNITY_SERIAL` with the serial
-  number instead, and skip the activation workflow. A Personal licence allows only two
-  concurrent activations, which a developer machine plus CI can exhaust.
-- **Runner disk space.** The workflow frees space before building because the Unity image
-  plus the library cache does not fit otherwise.
-- **A real run.** Neither the workflow nor a multi-arch image build has been executed yet.
-
-Locally the same thing can be built and served with:
+Tagging is the whole process:
 
 ```bash
-docker compose build && docker compose up -d
-curl -sI http://localhost:8003/healthz
+git tag -a v0.2.0 -m "..." && git push origin v0.2.0
 ```
+
+`.github/workflows/release.yml` then refreshes the TLE snapshot, builds WebGL through GameCI,
+pushes a `linux/amd64` and `linux/arm64` image to `ghcr.io/janvogt06/sattrak` and creates the
+GitHub release. Consumers run:
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+Port comes from `SATTRAK_PORT`, default 8003. `TLE_REFRESH_SECONDS` controls the refresh
+interval, `0` disables it.
+
+Running the workflow manually from the Actions tab builds without publishing and attaches
+the result as an artifact — use that to check a change before tagging. The first run takes
+one to three hours because the Unity library cache is cold; later runs reuse it.
+
+CI needs `UNITY_EMAIL`, `UNITY_PASSWORD` and `UNITY_LICENSE`. A `.ulf` produced by a Unity 6
+Hub activates 2022.3.62f3 without complaint — that was verified, the licence file version
+does not have to match the editor.
+
+## What the asset budget looks like
+
+Five builds, each measured:
+
+| | 1 | 2 | 3 | 4 | 5 |
+| --- | --- | --- | --- | --- | --- |
+| Build size | 283 MB | 249 MB | 223 MB | 156 MB | **148 MB** |
+| Textures uncompressed | 718 MB | 718 MB | 456 MB | 243 MB | 243 MB |
+| Build time | 33 min | 11 min | 8.5 min | 6 min | 6 min |
+
+What each step did: the binary city database, then model textures capped at 1024, then at
+512 plus the earth texture at 4K, the starfield at 2K and audio quality at 0.35, then help
+images at 1024.
+
+The lesson worth passing on: **judge assets by Unity's build report, not by file size on
+disk.** `starlink_spacex_satellite.glb` is 15 MB as a file and was 257 MB in the build,
+because glTF stores textures PNG compressed and three 4096x4096 maps expand seventeenfold on
+import. `tools/shrink-model-textures.py` rewrites the embedded images; untouched originals
+live in `art-source/models/`, outside `Assets/` so Unity does not import them. The shrunk
+files keep their names, meta files and GUIDs, so no scene reference breaks.
+
+Largest remaining assets: `ISS_stationary.glb` at 48.8 MB (26 textures, none oversized on
+its own), then the audio tracks at roughly 10 MB each.
 
 ## Open items and known issues
 
-- **`cities.json` strategy** is undecided. See above.
-- **Earth mode has no terrain.** Cesium streamed 3D tiles; the globe is now an ellipsoid
-  with a single 8k NASA Blue Marble texture. City search, fly-to, free-fly, day/night and
-  the heatmap all still work, but there is no street-level detail. At 1000 m altitude the
-  whole screen covers 0.38 texels, which is why `GeoNamesSearchFromJSON.earthViewAltitude`
-  now defaults to 250 km. Below roughly 50 km it stops being useful.
-- **Two inspector values still need tuning** after that altitude change:
-  `ViewModeController.nearEarth` is 1 m, which causes z-fighting at 250 km camera distance,
-  and `FreeFlyCamera` movement speed is far too slow for that altitude.
-- **Globe tessellation** is 256×128 segments, so one segment spans 156 km at the equator.
-  Fine from orbit; the horizon reads as a straight edge up close. Adjustable on `EarthGlobe`.
-- **One missing lighting settings asset** in `GameScene` (GUID
-  `8bdf27f6e3fbb4f2f9f891fbf3dbf399`). It predates all of this work.
-- **The README screenshot** still shows the Cesium globe and is out of date.
+**Localization is broken on WebGL.** This is the one real blocker left. The browser console
+shows:
+
+```
+Exception: WebGLPlayer does not support synchronous Addressable loading.
+Please do not use WaitForCompletion on the WebGLPlayer platform.
+Locales PreloadOperation has not been initialized, can not return the available locales.
+```
+
+Unity's Localization package resolves locales synchronously through Addressables, which
+WebGL does not support. Menu text still appears through the English fallback, so it is not
+immediately obvious, but language switching is very likely dead. The fix is to await
+`LocalizationSettings.InitializationOperation` before anything touches locales, rather than
+letting the package block.
+
+**Two inspector values still need tuning.** `ViewModeController.nearEarth` is 1 m, which
+causes z-fighting now that the city fly-to ends at 250 km, and `FreeFlyCamera` movement speed
+is far too slow for that altitude.
+
+**The earth mode has no terrain.** Cesium streamed 3D tiles; the globe is now an ellipsoid
+with one 4K NASA Blue Marble texture. City search, fly-to, free-fly, day/night and the
+heatmap all work, but there is no street level detail. At 1000 m altitude the whole screen
+covered 0.38 texels, which is why `GeoNamesSearchFromJSON.earthViewAltitude` defaults to
+250 km. Below roughly 50 km it stops being useful.
+
+**Globe tessellation** is 256x128 segments, so one segment spans 156 km at the equator. Fine
+from orbit; the horizon reads as a straight edge up close. Adjustable on `EarthGlobe`.
+
+**Unity 6** was considered and deliberately postponed. Its WebGL backend is better and the
+memory budget would benefit, but it is a URP 14 to 17 jump that would need everything
+reverified. Note the existing `unity6-upgrade` branch is useless: it forks from before this
+work and reinstates Cesium. Starting fresh from `main` is the only sensible path.
+
+**One missing lighting settings asset** in `GameScene` (GUID
+`8bdf27f6e3fbb4f2f9f891fbf3dbf399`). It predates all of this work.
+
+**The README screenshot** still shows the Cesium globe and is out of date.
+
+**CelesTrak throttling** is easy to trip. It answers with HTTP 200 and a plain text notice
+rather than an error, and polling in a loop earns an HTTP 403 for a while. Both the runtime
+and the update script reject anything that is not three-line TLE format, so this degrades
+into "keep the previous data" rather than breaking, but do not poll it.
 
 ## Conventions used here
 
