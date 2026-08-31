@@ -16,7 +16,7 @@ The goal is to publish it as a WebGL build served from a container, installable 
 | Unity | 2022.3.62f3 |
 | Runs in the editor | yes, no account or API key needed |
 | WebGL build | first attempt in progress; the WebGL module is installed |
-| Docker / CI | not started |
+| Docker / CI | files in place, never executed; Unity secrets missing |
 | Blocking issue | `cities.json` allocates ~700 MB of heap at startup |
 
 The two things that used to block a browser build are done: Cesium is gone, and the TLE
@@ -179,196 +179,37 @@ only costs clone time. Left in place deliberately.
 
 ### 3. Ship it
 
-Follow the PicHunter layout: `Dockerfile` at the root, nginx config under `docker/`, image
-on GHCR, a `v*` tag triggers build and release.
+The container and the release workflow already exist. What is missing is the Unity licence
+in CI and a real end-to-end run.
 
-Two things differ from the other projects: Unity has to build inside CI, and the TLE file
-needs refreshing inside the container.
+| File | Purpose |
+| --- | --- |
+| `Dockerfile` | `nginx:stable-alpine`, copies `build/WebGL/SatTrak/` into the web root |
+| `docker/default.conf` | Brotli and gzip headers for `.wasm`, `.js` and `.data`, `/healthz`, the TLE location |
+| `docker/entrypoint.sh` | Seeds the TLE file from the bundled snapshot, refreshes it every two hours |
+| `docker-compose.yml` | GHCR image, port via `SATTRAK_PORT` (default 8003), healthcheck |
+| `.dockerignore` | Keeps `unity/Library` out of the build context — it is 6.7 GB |
+| `.github/workflows/release.yml` | `v*` tag builds WebGL with GameCI and pushes to GHCR |
 
-#### `docker/entrypoint.sh`
+The entrypoint only replaces the served TLE file when the response passes the three-line
+format check, so a throttled or failed request leaves the previous copy in place. Set
+`TLE_REFRESH_SECONDS=0` to disable refreshing entirely.
 
-Seeds the served TLE file from the bundled snapshot, then refreshes it on an interval. Only
-data that passes the format check ever replaces the file, so a throttled or failed request
-leaves the previous copy in place.
+Three things still to do:
 
-```sh
-#!/bin/sh
-set -eu
+- **Repository secrets.** GameCI needs `UNITY_EMAIL`, `UNITY_PASSWORD` and `UNITY_LICENSE`.
+  The `.ulf` file comes from the GameCI activation workflow. Without them the release job
+  fails at the build step.
+- **Runner disk space.** The workflow frees space before building because the Unity image
+  plus the library cache does not fit otherwise.
+- **A real run.** Neither the workflow nor a multi-arch image build has been executed yet.
 
-LIVE=/usr/share/nginx/html/tle/active.txt
-SEED=/usr/share/nginx/html/StreamingAssets/tle/active.txt
-URL="https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=TLE"
-AGENT="SatTrak (+https://github.com/JanVogt06/SatTrak-SatelliteVisualization)"
-INTERVAL="${TLE_REFRESH_SECONDS:-7200}"
+Locally the same thing can be built and served with:
 
-mkdir -p "$(dirname "$LIVE")"
-[ -f "$LIVE" ] || cp "$SEED" "$LIVE"
-
-refresh() {
-  tmp=$(mktemp)
-  if curl -sSfL -A "$AGENT" "$URL" -o "$tmp"; then
-    lines=$(grep -c . "$tmp" || true)
-    if [ "$lines" -ge 3 ] && [ $((lines % 3)) -eq 0 ] &&
-       awk 'NR%3==2 && $0 !~ /^1 / {exit 1} NR%3==0 && $0 !~ /^2 / {exit 1}' "$tmp"; then
-      mv "$tmp" "$LIVE"
-      echo "[tle] refreshed with $((lines / 3)) element sets"
-      return
-    fi
-    echo "[tle] upstream sent no usable TLE data, keeping previous file"
-  else
-    echo "[tle] upstream request failed, keeping previous file"
-  fi
-  rm -f "$tmp"
-}
-
-( while :; do refresh; sleep "$INTERVAL"; done ) &
-
-exec /docker-entrypoint.sh nginx -g 'daemon off;'
+```bash
+docker compose build && docker compose up -d
+curl -sI http://localhost:8003/healthz
 ```
-
-#### `docker/default.conf`
-
-The Brotli blocks are the part that matters. Unity emits `.wasm.br`, `.js.br` and
-`.data.br`; without the right `Content-Encoding` and `Content-Type` the browser refuses
-them. More specific regex locations must come first — nginx takes the first match.
-
-```nginx
-server {
-    listen 80;
-    server_name _;
-
-    root /usr/share/nginx/html;
-    index index.html;
-
-    location = /healthz {
-        access_log off;
-        default_type text/plain;
-        return 200 "ok\n";
-    }
-
-    location ~ \.wasm\.br$ {
-        default_type application/wasm;
-        add_header Content-Encoding br;
-        add_header Cache-Control "public, max-age=31536000, immutable";
-    }
-
-    location ~ \.js\.br$ {
-        default_type application/javascript;
-        add_header Content-Encoding br;
-        add_header Cache-Control "public, max-age=31536000, immutable";
-    }
-
-    location ~ \.(data|symbols\.json)\.br$ {
-        default_type application/octet-stream;
-        add_header Content-Encoding br;
-        add_header Cache-Control "public, max-age=31536000, immutable";
-    }
-
-    location = /tle/active.txt {
-        default_type text/plain;
-        add_header Cache-Control "public, max-age=600";
-    }
-
-    location / {
-        try_files $uri $uri/ /index.html;
-        add_header Cache-Control "no-cache";
-    }
-}
-```
-
-#### `Dockerfile`
-
-```dockerfile
-FROM nginx:stable-alpine
-
-RUN apk add --no-cache curl
-
-COPY docker/default.conf /etc/nginx/conf.d/default.conf
-COPY docker/entrypoint.sh /entrypoint.sh
-COPY build/WebGL/SatTrak/ /usr/share/nginx/html/
-
-RUN chmod +x /entrypoint.sh
-
-EXPOSE 80
-ENTRYPOINT ["/entrypoint.sh"]
-```
-
-#### `docker-compose.yml`
-
-PicHunter uses 8002, so pick another port.
-
-```yaml
-services:
-  sattrak:
-    image: ghcr.io/janvogt06/sattrak:latest
-    build: .
-    container_name: sattrak
-    restart: unless-stopped
-    ports:
-      - "${SATTRAK_PORT:-8003}:80"
-    environment:
-      TLE_REFRESH_SECONDS: "7200"
-    healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1/healthz"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-```
-
-#### `.github/workflows/release.yml`
-
-The existing PicHunter workflow works almost unchanged. What has to be added in front of it:
-
-```yaml
-      - name: Free disk space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-
-      - name: Refresh TLE snapshot
-        run: ./tools/update-tle-snapshot.sh || echo "keeping the committed snapshot"
-
-      - name: Cache Unity Library
-        uses: actions/cache@v4
-        with:
-          path: unity/Library
-          key: Library-WebGL-${{ hashFiles('unity/Assets/**', 'unity/Packages/**', 'unity/ProjectSettings/**') }}
-          restore-keys: Library-WebGL-
-
-      - name: Build WebGL
-        uses: game-ci/unity-builder@v4
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-        with:
-          projectPath: unity
-          targetPlatform: WebGL
-          unityVersion: 2022.3.62f3
-          buildName: SatTrak
-```
-
-The rest — QEMU, Buildx, GHCR login, `docker/metadata-action`, `build-push-action` for
-`linux/amd64` and `linux/arm64`, `softprops/action-gh-release` — can be copied from
-PicHunter verbatim.
-
-Three things to be aware of:
-
-- **Unity needs a licence in CI.** GameCI wants `UNITY_EMAIL`, `UNITY_PASSWORD` and
-  `UNITY_LICENSE` as repository secrets. A personal licence works; the `.ulf` file is
-  produced by the GameCI activation workflow.
-- **Runner disk space.** The Unity image is several GB and the Library cache adds more.
-  Freeing space first is not optional.
-- **Multi-arch is nearly free.** The WebGL output is platform independent; only nginx
-  differs between architectures.
-
-None of this has been executed yet. Treat the snippets as a starting point, not as tested
-configuration.
 
 ## Open items and known issues
 
