@@ -184,7 +184,7 @@ namespace Satellites
                     if (modelApplied) modelledSatellites++;
                 }
 
-                Debug.Log($"Initialisiert: {_satellites.Count} Satelliten, {modelledSatellites} mit Modellen");
+                Debug.Log($"Initialized {_satellites.Count} satellites, {modelledSatellites} with models");
                 OnSatellitesLoaded?.Invoke(_satellites);
             }
             catch (Exception e)
