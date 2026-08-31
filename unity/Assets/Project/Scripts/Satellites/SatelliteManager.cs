@@ -19,10 +19,14 @@ namespace Satellites
 
         public static SatelliteManager Instance { get; private set; }
 
-        private const string TleUrl = "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=TLE";
-        private const string TleCacheFileName = "cacheTle.txt";
         private const int SatellitesPerFrame = 250;
-        private static readonly TimeSpan TleMaxAge = TimeSpan.FromHours(12);
+
+        [Header("TLE Data")]
+        [Tooltip("Endpoint on the hosting server, relative to the page. Empty to use the bundled snapshot only")]
+        public string liveTleUrl = "tle/active.txt";
+
+        [Tooltip("Fallback file below StreamingAssets")]
+        public string tleSnapshotFile = "tle/active.txt";
 
         [Header("Prefabs & References")]
         public GameObject satellitePrefab;
@@ -169,14 +173,12 @@ namespace Satellites
 
         private IEnumerator LoadSatellites()
         {
-            Debug.Log($"[SatelliteManager] Downloading TLE data from {TleUrl}");
-
             Dictionary<int, Tle> data = null;
-            var source = new TleSource(TleUrl, TleMaxAge, TleCacheFileName);
+            var source = new TleSource(liveTleUrl, tleSnapshotFile);
 
             yield return source.Load(
                 tles => data = tles,
-                error => Debug.LogError($"[SatelliteManager] TLE download failed: {error}"));
+                error => Debug.LogError($"[SatelliteManager] No TLE source available: {error}"));
 
             if (data == null)
             {

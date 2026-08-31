@@ -1,9 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Text;
 using Satellites.SGP.TLE;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -12,32 +9,49 @@ namespace Satellites
 {
     public class TleSource
     {
-        private const string HeaderFormat = "u";
         private const string UserAgent = "SatTrak (https://github.com/JanVogt06/SatTrak-SatelliteVisualization)";
 
-        private readonly string _url;
-        private readonly TimeSpan _maxAge;
-        private readonly string _cachePath;
+        private readonly string _liveUrl;
+        private readonly string _snapshotUrl;
 
-        public TleSource(string url, TimeSpan maxAge, string cacheFileName)
+        public TleSource(string liveUrl, string snapshotFileName)
         {
-            _url = url;
-            _maxAge = maxAge;
-            _cachePath = Path.Combine(Application.persistentDataPath, cacheFileName);
+            _liveUrl = string.IsNullOrWhiteSpace(liveUrl) ? null : liveUrl.Trim();
+            _snapshotUrl = BuildStreamingAssetsUrl(snapshotFileName);
         }
 
         public IEnumerator Load(Action<Dictionary<int, Tle>> onLoaded, Action<string> onFailed)
         {
-            if (TryReadCache(_maxAge, out var cached))
+            var failures = new List<string>();
+
+            foreach (var url in new[] { _liveUrl, _snapshotUrl })
             {
-                onLoaded(cached);
-                yield break;
+                if (url == null) continue;
+
+                Dictionary<int, Tle> tles = null;
+                string failure = null;
+
+                yield return Fetch(url, result => tles = result, message => failure = message);
+
+                if (tles != null)
+                {
+                    Debug.Log($"[TleSource] Loaded {tles.Count} TLE records from {url}");
+                    onLoaded(tles);
+                    yield break;
+                }
+
+                failures.Add($"{url} -> {failure}");
             }
 
-            string body = null;
-            string error = null;
+            onFailed(string.Join(" | ", failures));
+        }
 
-            using (var request = UnityWebRequest.Get(_url))
+        private static IEnumerator Fetch(string url, Action<Dictionary<int, Tle>> onParsed, Action<string> onFailed)
+        {
+            string body = null;
+            string transportError = null;
+
+            using (var request = UnityWebRequest.Get(url))
             {
                 request.SetRequestHeader("User-Agent", UserAgent);
                 yield return request.SendWebRequest();
@@ -45,80 +59,37 @@ namespace Satellites
                 if (request.result == UnityWebRequest.Result.Success)
                     body = request.downloadHandler.text;
                 else
-                    error = $"{request.result}: {request.error}";
+                    transportError = $"{request.result}: {request.error}";
             }
 
-            if (body != null)
+            if (transportError != null)
             {
-                if (TryParse(body, out var downloaded))
-                {
-                    WriteCache(body);
-                    onLoaded(downloaded);
-                    yield break;
-                }
-
-                error = $"response was not TLE data: \"{Summarize(body)}\"";
-            }
-
-            if (TryReadCache(TimeSpan.MaxValue, out var stale))
-            {
-                Debug.LogWarning($"[TleSource] Falling back to expired cache after failed download ({error})");
-                onLoaded(stale);
+                onFailed(transportError);
                 yield break;
             }
 
-            onFailed(error ?? "response could not be parsed");
+            if (!TryParse(body, out var tles))
+            {
+                onFailed($"not TLE data: \"{Summarize(body)}\"");
+                yield break;
+            }
+
+            onParsed(tles);
         }
 
-        private bool TryReadCache(TimeSpan maxAge, out Dictionary<int, Tle> tles)
+        private static string BuildStreamingAssetsUrl(string fileName)
         {
-            tles = null;
-
-            string content;
-            try
-            {
-                if (!File.Exists(_cachePath)) return false;
-                content = File.ReadAllText(_cachePath, Encoding.UTF8);
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning($"[TleSource] Cache could not be read: {e.Message}");
-                return false;
-            }
-
-            var breakIndex = content.IndexOf('\n');
-            if (breakIndex < 0) return false;
-
-            if (!DateTime.TryParseExact(content.Substring(0, breakIndex).Trim(), HeaderFormat,
-                                        CultureInfo.InvariantCulture,
-                                        DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal,
-                                        out var written))
-                return false;
-
-            if (DateTime.UtcNow - written > maxAge) return false;
-
-            return TryParse(content.Substring(breakIndex + 1), out tles);
-        }
-
-        private void WriteCache(string body)
-        {
-            try
-            {
-                var content = DateTime.UtcNow.ToString(HeaderFormat, CultureInfo.InvariantCulture) + "\n" + body;
-                File.WriteAllText(_cachePath, content, Encoding.UTF8);
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning($"[TleSource] Cache could not be written: {e.Message}");
-            }
+            string basePath = Application.streamingAssetsPath;
+            string path = basePath.EndsWith("/") ? basePath + fileName : basePath + "/" + fileName;
+            return path.Contains("://") ? path : "file://" + path;
         }
 
         private static bool TryParse(string body, out Dictionary<int, Tle> tles)
         {
             tles = null;
+            if (string.IsNullOrEmpty(body)) return false;
 
-            var lines = body
-                .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            var lines = body.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
             int complete = (lines.Length / 3) * 3;
             if (complete == 0) return false;
@@ -152,6 +123,7 @@ namespace Satellites
 
         private static string Summarize(string body)
         {
+            if (string.IsNullOrEmpty(body)) return "empty response";
             var text = body.Replace('\r', ' ').Replace('\n', ' ').Trim();
             return text.Length <= 160 ? text : text.Substring(0, 160) + "...";
         }
