@@ -198,8 +198,18 @@ format check, so a throttled or failed request leaves the previous copy in place
 Three things still to do:
 
 - **Repository secrets.** GameCI needs `UNITY_EMAIL`, `UNITY_PASSWORD` and `UNITY_LICENSE`.
-  The `.ulf` file comes from the GameCI activation workflow. Without them the release job
-  fails at the build step.
+  Without them the release job fails at the build step. To produce the licence:
+
+  1. Run the `Unity activation` workflow manually from the Actions tab. It attaches an
+     artifact containing a `.alf` file.
+  2. Upload that `.alf` at <https://license.unity3d.com/manual> and download the `.ulf`
+     that comes back.
+  3. Store the full text of the `.ulf` as the `UNITY_LICENSE` secret, plus the Unity
+     account address and password as `UNITY_EMAIL` and `UNITY_PASSWORD`.
+
+  With a Pro or Plus licence the flow is different: use `UNITY_SERIAL` with the serial
+  number instead, and skip the activation workflow. A Personal licence allows only two
+  concurrent activations, which a developer machine plus CI can exhaust.
 - **Runner disk space.** The workflow frees space before building because the Unity image
   plus the library cache does not fit otherwise.
 - **A real run.** Neither the workflow nor a multi-arch image build has been executed yet.
