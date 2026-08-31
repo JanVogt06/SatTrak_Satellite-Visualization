@@ -29,13 +29,9 @@ namespace Geo
             }
         }
 
-        private void OnEnable() => Rebuild();
+        private void OnEnable() => _built = false;
 
-        private void OnValidate()
-        {
-            _built = false;
-            Rebuild();
-        }
+        private void OnValidate() => _built = false;
 
         private void Update()
         {

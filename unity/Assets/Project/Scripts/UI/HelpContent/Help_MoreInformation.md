@@ -37,7 +37,7 @@
 - **GPU** – NVIDIA GTX 960 • AMD R9 280  
 - **DirectX 11 / Metal / Vulkan**  
 - **Storage** – 4 GB free  
-- **Internet** – required for Cesium tiles & TLE updates  
+- **Internet** – required for TLE updates  
 
 ### Recommended
 
@@ -47,14 +47,13 @@
 - **GPU** – NVIDIA GTX 1070 • AMD RX 5700  
 - **DirectX 12**  
 - **Storage** – 8 GB free  
-- **Broadband** for high-res streaming  
+- **Broadband** connection  
 
 \
 
 ## Technical Stack
 
 - **Unity** – 2022.3 LTS  
-- **Cesium for Unity** – ≥ 1.6.0  
 - **Render Pipeline** – Universal RP  
 - **Scripting backend** – IL2CPP • .NET Standard 2.1  
 
@@ -71,10 +70,10 @@
 
 ## Common Issues & Fixes
 
-**Cesium tiles not loading**  
+**Satellites do not appear**  
 - Check internet connection.  
-- Verify Ion token in the Cesium panel.  
-- Review firewall settings.
+- Review firewall settings.  
+- TLE data is cached for 12 hours and reloaded from celestrak.org afterwards.
 
 **Import errors**  
 - Refresh the Package Manager.  
@@ -85,7 +84,6 @@
 
 ## Further Reading
 
-- Cesium for Unity – official docs  
 - Celestrak – SGP-4 algorithm overview & TLE spec  
 - Unity Job System – multithreading guide  
 

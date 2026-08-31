@@ -1033,8 +1033,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 84079442}
+  - component: {fileID: 84079445}
+  - component: {fileID: 84079444}
+  - component: {fileID: 84079443}
   m_Layer: 0
-  m_Name: Cesium3DTileset
+  m_Name: Earth
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1055,6 +1058,71 @@ Transform:
   m_Children: []
   m_Father: {fileID: 708874051}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &84079443
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 84079441}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93ef1b1305178457b8afd722a3e1a24d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _georeference: {fileID: 1786786860}
+  _longitudeSegments: 256
+  _latitudeSegments: 128
+--- !u!23 &84079444
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 84079441}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: a363c7f9479ce4ef3839714bd31c1d15, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &84079445
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 84079441}
+  m_Mesh: {fileID: 0}
 --- !u!1 &85876197
 GameObject:
   m_ObjectHideFlags: 0
@@ -15337,7 +15405,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   satellitePrefab: {fileID: 1888826446}
-  cesiumGeoreference: {fileID: 1786786860}
+  georeference: {fileID: 1786786860}
   satelliteParent: {fileID: 1901460567}
   heatmapController: {fileID: 2058484569}
   time: {fileID: 568983495}
@@ -26786,7 +26854,7 @@ GameObject:
   - component: {fileID: 1786786861}
   - component: {fileID: 1786786860}
   m_Layer: 0
-  m_Name: CesiumGeoreference
+  m_Name: Georeference
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -26804,15 +26872,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e3345ff66e1d4bf4a46ea0520f08a5e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _ellipsoidOverride: {fileID: 0}
-  _originPlacement: 1
   _originAuthority: 1
   _latitude: 51.21796000000001
   _longitude: 11.66699
   _height: 400.0000000024448
-  _ecefX: 3920695.404077138
-  _ecefY: 809581.5500770364
-  _ecefZ: 4949080.395973809
+  _ecefX: 3920695.404077137
+  _ecefY: 809581.5500770363
+  _ecefZ: 4949080.395973811
   _scale: 1
 --- !u!4 &1786786861
 Transform:
@@ -29505,30 +29571,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54c42fa53765d4d87b87380000a25430, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _adjustOrientationForGlobeWhenMoving: 1
-  _detectTransformChanges: 1
-  _localToGlobeFixedMatrix:
-    c0:
-      x: -0.38933827101571233
-      y: -0.3503589512387149
-      z: -0.8518600683264568
-      w: 0
-    c1:
-      x: 0.6772665505318838
-      y: -0.7357161093143061
-      z: -0.006950803325422084
-      w: 0
-    c2:
-      x: 0.6242906421863591
-      y: 0.5796413636762299
-      z: -0.5237277683393864
-      w: 0
-    c3:
-      x: 1255842.134160746
-      y: 5376948.844156955
-      z: -4518772.126621535
-      w: 1
-  _localToGlobeFixedMatrixIsValid: 1
+  _georeference: {fileID: 1786786860}
 --- !u!114 &1952269538
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -31028,30 +31071,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54c42fa53765d4d87b87380000a25430, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _adjustOrientationForGlobeWhenMoving: 1
-  _detectTransformChanges: 1
-  _localToGlobeFixedMatrix:
-    c0:
-      x: -7916758.5580230355
-      y: 7408349.958831914
-      z: 8043090.976950094
-      w: 0
-    c1:
-      x: 8763047.408866944
-      y: 10237768.590668775
-      z: -804422.4167612325
-      w: 0
-    c2:
-      x: 6540943.733245969
-      y: -4749152.964782218
-      z: 10812566.888239654
-      w: 0
-    c3:
-      x: 0.10107283154502511
-      y: 0.043370456085540354
-      z: 0.10173344891518354
-      w: 1
-  _localToGlobeFixedMatrixIsValid: 1
+  _georeference: {fileID: 1786786860}
 --- !u!23 &2058484567
 MeshRenderer:
   m_ObjectHideFlags: 0

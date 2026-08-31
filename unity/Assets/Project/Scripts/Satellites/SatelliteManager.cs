@@ -11,7 +11,6 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Jobs;
-using UnityEngine.Serialization;
 
 namespace Satellites
 {
@@ -27,7 +26,6 @@ namespace Satellites
 
         [Header("Prefabs & References")]
         public GameObject satellitePrefab;
-        [FormerlySerializedAs("cesiumGeoreference")]
         public Georeference georeference;
         public GameObject satelliteParent;
         public HeatmapController heatmapController;
