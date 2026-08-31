@@ -1,0 +1,15 @@
+services:
+  sattrak:
+    image: ghcr.io/janvogt06/sattrak:latest
+    build: .
+    container_name: sattrak
+    restart: unless-stopped
+    ports:
+      - "${SATTRAK_PORT:-8003}:80"
+    environment:
+      TLE_REFRESH_SECONDS: "7200"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
