@@ -16,6 +16,23 @@ The remaining work towards a browser build is the asset budget: `cities.json` al
 189 MB and is parsed into roughly 700 MB of managed heap at startup, which no browser
 will survive.
 
+## TLE data
+
+Clients never talk to CelesTrak. `SatelliteManager` asks the hosting server for
+`tle/active.txt` first and falls back to the snapshot bundled under
+`unity/Assets/StreamingAssets/tle/active.txt`. In the planned container, nginx serves that
+path from CelesTrak with a two hour cache, so one upstream request covers every visitor.
+
+Refresh the bundled snapshot with:
+
+```bash
+./tools/update-tle-snapshot.sh
+```
+
+CelesTrak throttles repeated downloads of the same group and answers with a plain text
+notice instead of element sets. The script refuses to write anything that is not in
+three line TLE format, and the runtime does the same check before accepting a response.
+
 ## Requirements
 
 - Unity 2022.3.62f3
@@ -60,6 +77,7 @@ Earth mode:
 
 ```
 screenshots/                  README image
+tools/                        Maintenance scripts
 unity/
   Assets/
     AddressableAssetsData/    Addressables configuration (fixed path)
@@ -76,6 +94,7 @@ unity/
       Scenes/                 MainMenu and GameScene
       Scripts/
       Settings/               URP render pipeline assets
+    StreamingAssets/tle/      Bundled TLE snapshot, served as a loose file
     ThirdParty/               Vendored assets, kept as delivered
       DoubleSlider/           Altitude range slider
       SGP/                    SGP4 propagator port
@@ -95,7 +114,7 @@ unity/
 | `Satellites/SatelliteModelController` | Model and sphere switching per camera mode |
 | `Satellites/MoveSatelliteJobParallelForTransform` | Burst job moving satellite transforms |
 | `Satellites/ConversionExtensions` | SGP to Unity coordinate conversion |
-| `Satellites/TleSource` | TLE download over UnityWebRequest with a 12 hour disk cache |
+| `Satellites/TleSource` | Loads TLE data from the server, falls back to the bundled snapshot |
 | `Geo/Wgs84` | Ellipsoid math: geodetic and ECEF conversion, East-Up-North frame |
 | `Geo/Georeference` | Local frame origin, ECEF transforms, floating origin |
 | `Geo/GlobeAnchor` | Keeps a transform fixed to a geographic position |
