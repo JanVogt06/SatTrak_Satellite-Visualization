@@ -1,3 +1,4 @@
 unity/Assets/Project/Data/Cities/cities.json filter=lfs diff=lfs merge=lfs -text
 unity/Assets/Project/Models/**/*.glb filter=lfs diff=lfs merge=lfs -text
 unity/Assets/Project/Art/Earth/*.jpg filter=lfs diff=lfs merge=lfs -text
+unity/Assets/StreamingAssets/tle/*.txt -text
