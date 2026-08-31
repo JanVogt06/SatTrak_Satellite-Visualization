@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Satellites;
-using CesiumForUnity;
+using Geo;
 using Satellites.SGP.Propagation;
 using Unity.Mathematics;
 using UnityEngine.EventSystems;
@@ -24,8 +24,8 @@ public class SearchPanelController : MonoBehaviour
     public TextMeshProUGUI pageLabel;
 
     [Header("External References")] public SatelliteManager satelliteManager;
-    public CesiumZoomController zoomController;
-    public CesiumGeoreference georeference;
+    public ViewModeController zoomController;
+    public Georeference georeference;
     public GridLayoutGroup trackedLayoutGroup;
     public GameObject SatelliteTrackPrefab;
     public GameObject SatelliteTrackList;

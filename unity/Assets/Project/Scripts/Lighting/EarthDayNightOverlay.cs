@@ -1,11 +1,11 @@
 using UnityEngine;
-using CesiumForUnity;
+using Geo;
 using Unity.Mathematics;
 
 public class EarthDayNightOverlay : MonoBehaviour
 {
     [Header("References")]
-    public CesiumGeoreference georeference;
+    public Georeference georeference;
     public DayNightSystem dayNightSystem;
 
     [Header("Overlay Settings")]

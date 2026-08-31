@@ -1,15 +1,15 @@
 using UnityEngine;
 using System.Collections;
-using CesiumForUnity;
+using Geo;
 using Unity.Mathematics;
 using UnityEngine.UI;
 using Satellites;
 using UnityEngine.Experimental.GlobalIllumination;
 using TMPro;
 
-public class CesiumZoomController : MonoBehaviour
+public class ViewModeController : MonoBehaviour
 {
-    public CesiumGlobeAnchor globeAnchor;
+    public GlobeAnchor globeAnchor;
 
     public double3 spaceView = new double3(11.666985, 51.217959, 300);
 
@@ -29,7 +29,7 @@ public class CesiumZoomController : MonoBehaviour
 
     public FreeFlyCamera freeFlyCameraScript;
 
-    public CesiumGeoreference georeference;
+    public Georeference georeference;
 
     public SearchPanelController searchPanelController;
 

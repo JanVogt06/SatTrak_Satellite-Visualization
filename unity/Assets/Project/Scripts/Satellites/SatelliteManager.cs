@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using CesiumForUnity;
+using Geo;
 using Heatmap;
 using Satellites.SGP.Propagation;
 using Satellites.SGP.TLE;
@@ -27,7 +27,8 @@ namespace Satellites
 
         [Header("Prefabs & References")]
         public GameObject satellitePrefab;
-        public CesiumGeoreference cesiumGeoreference;
+        [FormerlySerializedAs("cesiumGeoreference")]
+        public Georeference georeference;
         public GameObject satelliteParent;
         public HeatmapController heatmapController;
         public TimeSlider.TimeSlider time;
@@ -117,7 +118,7 @@ namespace Satellites
             var job = new MoveSatelliteJobParallelForTransform
             {
                 CurrentTime = time.CurrentSimulatedTime,
-                EcefToLocalMatrix = cesiumGeoreference.ecefToLocalMatrix,
+                EcefToLocalMatrix = georeference.ecefToLocalMatrix,
                 OrbitPropagator = _propagators,
                 Positions = _currentPositions
             };

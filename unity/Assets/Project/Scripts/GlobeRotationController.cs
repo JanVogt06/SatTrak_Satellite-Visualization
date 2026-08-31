@@ -1,4 +1,4 @@
-using CesiumForUnity;
+using Geo;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -7,7 +7,7 @@ public class GlobeRotationController : MonoBehaviour
 {
     [Header("Mode Switch")]
     public FreeFlyCamera freeFlyCamera;
-    public CesiumGeoreference georeference;
+    public Georeference georeference;
     public float fovThreshold = 70f;
 
     [Header("Orbit Settings")]

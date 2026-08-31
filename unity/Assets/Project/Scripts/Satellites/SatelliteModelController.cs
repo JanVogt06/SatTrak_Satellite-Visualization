@@ -6,7 +6,7 @@ namespace Satellites
     public class SatelliteModelController : MonoBehaviour
     {
         [Header("References")]
-        public CesiumZoomController zoomController;
+        public ViewModeController zoomController;
 
         [Header("Settings")]
         [Tooltip("FOV threshold for switching modes")]

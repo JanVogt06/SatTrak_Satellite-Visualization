@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using CesiumForUnity;
+using Geo;
 using Unity.Mathematics;
 using UnityEngine;
 using Satellites.SGP;
@@ -67,7 +67,7 @@ namespace Satellites
             {
                 var pos = _orbitPropagator.FindPosition(time.CurrentSimulatedTime.Add(i))
                     .ToSphericalEcef();
-                var position = math.mul(SatelliteManager.Instance.cesiumGeoreference.ecefToLocalMatrix,
+                var position = math.mul(SatelliteManager.Instance.georeference.ecefToLocalMatrix,
                     new double4(pos.ToDouble(), 1.0)).xyz;
                 positions.Add(position.ToVector());
             }

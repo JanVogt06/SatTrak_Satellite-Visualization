@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Unity.Mathematics;
 using System.Collections;
-using CesiumForUnity;
+using Geo;
 using System.Linq;
 using UnityEngine.EventSystems;
 using UnityEngine.Localization.Settings;
@@ -46,8 +46,8 @@ public class GeoNamesSearchFromJSON : MonoBehaviour
     public TMP_Dropdown filterDropdown;
 
     [Header("External References")]
-    public CesiumZoomController zoomController;
-    public CesiumGeoreference georeference;
+    public ViewModeController zoomController;
+    public Georeference georeference;
 
     [Header("Settings")]
     public int itemsPerPage = 20;

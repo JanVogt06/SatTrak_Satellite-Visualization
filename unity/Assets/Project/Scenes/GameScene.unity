@@ -1033,7 +1033,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 84079442}
-  - component: {fileID: 84079443}
   m_Layer: 0
   m_Name: Cesium3DTileset
   m_TagString: Untagged
@@ -1056,47 +1055,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 708874051}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &84079443
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 84079441}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 844ac86b07dcfa3468f56da55d787510, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _showCreditsOnScreen: 0
-  _tilesetSource: 1
-  _url: https://tile.googleapis.com/v1/3dtiles/root.json?key=AIzaSyDVo_SMCb2Cob8qSRReB1nIQ5OhM4lvBEQ
-  _ionAssetID: 0
-  _ionAccessToken: 
-  _ionServer: {fileID: 11400000, guid: a6a29cad06615fb4693a9cc7c0dee01b, type: 2}
-  _maximumScreenSpaceError: 40
-  _preloadAncestors: 1
-  _preloadSiblings: 1
-  _forbidHoles: 0
-  _maximumSimultaneousTileLoads: 20
-  _maximumCachedBytes: 536870912
-  _loadingDescendantLimit: 20
-  _enableFrustumCulling: 1
-  _enableFogCulling: 1
-  _enforceCulledScreenSpaceError: 1
-  _culledScreenSpaceError: 64
-  _opaqueMaterial: {fileID: 0}
-  _generateSmoothNormals: 0
-  _pointCloudShading:
-    _attenuation: 0
-    _geometricErrorScale: 1
-    _maximumAttenuation: 0
-    _baseResolution: 0
-  _suspendUpdate: 0
-  _showTilesInHierarchy: 0
-  _updateInEditor: 1
-  _logSelectionStats: 0
-  _createPhysicsMeshes: 0
 --- !u!1 &85876197
 GameObject:
   m_ObjectHideFlags: 0
@@ -10224,7 +10182,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1952269538}
-        m_TargetAssemblyTypeName: CesiumZoomController, Assembly-CSharp
+        m_TargetAssemblyTypeName: ViewModeController, Assembly-CSharp
         m_MethodName: ZoomToSpace
         m_Mode: 1
         m_Arguments:
@@ -26827,7 +26785,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1786786861}
   - component: {fileID: 1786786860}
-  - component: {fileID: 1786786859}
   m_Layer: 0
   m_Name: CesiumGeoreference
   m_TagString: Untagged
@@ -26835,21 +26792,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1786786859
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1786786858}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: be1fb41cdd01d7649a082f1a8f2bd114, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _useMainCamera: 1
-  _useSceneViewCameraInEditor: 1
-  _additionalCameras: []
 --- !u!114 &1786786860
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -26859,7 +26801,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1786786858}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d1305e05d46db92498ce698a4c366a5a, type: 3}
+  m_Script: {fileID: 11500000, guid: 7e3345ff66e1d4bf4a46ea0520f08a5e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _ellipsoidOverride: {fileID: 0}
@@ -29381,7 +29323,6 @@ GameObject:
   - component: {fileID: 1952269537}
   - component: {fileID: 1952269538}
   - component: {fileID: 1952269539}
-  - component: {fileID: 1952269540}
   m_Layer: 0
   m_Name: DynamicCamera
   m_TagString: MainCamera
@@ -29561,7 +29502,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1952269526}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 74f14e1eb550b9a4fb6c0a2f0456845b, type: 3}
+  m_Script: {fileID: 11500000, guid: 54c42fa53765d4d87b87380000a25430, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _adjustOrientationForGlobeWhenMoving: 1
@@ -29645,22 +29586,6 @@ MonoBehaviour:
   maxPitchUp: 120
   maxPitchDown: -50
   smoothFactor: 8
---- !u!114 &1952269540
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1952269526}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 44a08d75aa373384ebec040e7526e367, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  globeAnchor: {fileID: 1952269537}
-  tileset: {fileID: 84079443}
-  minAboveGround: 10
-  sampleRateHz: 10
 --- !u!1 &1971821174
 GameObject:
   m_ObjectHideFlags: 0
@@ -31100,7 +31025,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2058484564}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 74f14e1eb550b9a4fb6c0a2f0456845b, type: 3}
+  m_Script: {fileID: 11500000, guid: 54c42fa53765d4d87b87380000a25430, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _adjustOrientationForGlobeWhenMoving: 1
