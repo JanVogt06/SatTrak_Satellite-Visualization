@@ -29,7 +29,11 @@ namespace Geo
             }
         }
 
-        private void OnEnable() => _built = false;
+        private void OnEnable()
+        {
+            _built = false;
+            Rebuild();
+        }
 
         private void OnValidate() => _built = false;
 
@@ -47,7 +51,7 @@ namespace Geo
             Rebuild();
         }
 
-        private void Rebuild()
+        public void Rebuild()
         {
             var geo = Georeference;
             if (geo == null) return;
