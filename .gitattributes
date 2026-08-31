@@ -1,2 +1,2 @@
-UnityProjekt/Assets/Project/Data/Cities/cities.json filter=lfs diff=lfs merge=lfs -text
-UnityProjekt/Assets/Project/Models/**/*.glb filter=lfs diff=lfs merge=lfs -text
+unity/Assets/Project/Data/Cities/cities.json filter=lfs diff=lfs merge=lfs -text
+unity/Assets/Project/Models/**/*.glb filter=lfs diff=lfs merge=lfs -text
