@@ -165,8 +165,8 @@ public class DayNightSystem : MonoBehaviour
         Debug.DrawRay(Vector3.zero, sunDirection * 10000000, Color.yellow);
 
         DateTime current = timeSlider.CurrentSimulatedTime;
-        Debug.Log($"Zeit: {current:yyyy-MM-dd HH:mm:ss}");
-        Debug.Log($"Sonnenrichtung: {sunDirection}");
+        Debug.Log($"Time: {current:yyyy-MM-dd HH:mm:ss}");
+        Debug.Log($"Sun direction: {sunDirection}");
         Debug.Log($"Sun elevation: {Vector3.Dot(sunDirection, Vector3.up):F2}");
     }
 

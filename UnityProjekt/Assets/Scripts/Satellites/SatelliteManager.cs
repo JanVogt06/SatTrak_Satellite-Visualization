@@ -166,16 +166,16 @@ namespace Satellites
         {
             try
             {
-                Debug.Log($"[SatelliteManager] Starte TLE-Download von: {TleUrl}");
+                Debug.Log($"[SatelliteManager] Downloading TLE data from {TleUrl}");
 
                 var provider = new CachingRemoteTleProvider(true, TimeSpan.FromHours(12), "cacheTle.txt", new Uri(TleUrl));
                 var data = provider.GetTles();
 
-                Debug.Log($"[SatelliteManager] TLE Data: Gefunden: {data.Count} Satelliten");
+                Debug.Log($"[SatelliteManager] Received {data.Count} TLE records");
 
                 if (data.Count == 0)
                 {
-                    Debug.LogError("[SatelliteManager] FEHLER: Keine TLE-Daten erhalten!");
+                    Debug.LogError("[SatelliteManager] No TLE data received");
                 }
 
                 int modelledSatellites = 0;
@@ -190,7 +190,7 @@ namespace Satellites
             }
             catch (Exception e)
             {
-                Debug.LogError($"[SatelliteManager] FEHLER beim TLE-Download: {e.Message}\n{e.StackTrace}");
+                Debug.LogError($"[SatelliteManager] TLE download failed: {e.Message}\n{e.StackTrace}");
             }
         }
 
@@ -216,20 +216,20 @@ namespace Satellites
         private void EnableInstancingForPrefabs(GameObject[] prefabs)
         {
             if (prefabs == null) return;
-            Debug.LogWarning($"GPU Instancing Check: {prefabs.Length} Modell-Prefabs gefunden");
+            Debug.LogWarning($"GPU instancing check: {prefabs.Length} model prefabs found");
 
             foreach (var prefab in prefabs)
             {
                 if (prefab == null)
                 {
-                    Debug.LogWarning("Prefab ist null!");
+                    Debug.LogWarning("Prefab is null");
                     continue;
                 }
 
                 var renderer = prefab.GetComponent<MeshRenderer>();
                 if (renderer == null)
                 {
-                    Debug.LogWarning($"Prefab {prefab.name} hat keinen MeshRenderer!");
+                    Debug.LogWarning($"Prefab {prefab.name} has no MeshRenderer");
                     continue;
                 }
 
@@ -244,7 +244,7 @@ namespace Satellites
         {
             if (mat == null)
             {
-                Debug.LogWarning("Material ist null!");
+                Debug.LogWarning("Material is null");
                 return;
             }
 
@@ -263,7 +263,7 @@ namespace Satellites
         {
             if (_satellites.Count == 0)
             {
-                Debug.LogError("Keine Satelliten zum Initialisieren des TransformAccessArray");
+                Debug.LogError("No satellites available to initialize the TransformAccessArray");
                 return;
             }
 

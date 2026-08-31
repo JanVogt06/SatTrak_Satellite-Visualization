@@ -26,7 +26,7 @@ public class EarthDayNightOverlay : MonoBehaviour
     {
         if (overlayMaterial == null)
         {
-            Debug.LogError("EarthDayNightOverlay: Kein Material zugewiesen! Bitte DayNightOverlayMaterial zuweisen.");
+            Debug.LogError("EarthDayNightOverlay: no material assigned");
             enabled = false;
             return;
         }
