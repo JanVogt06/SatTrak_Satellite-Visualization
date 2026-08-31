@@ -20,7 +20,7 @@ namespace Satellites
 {
     public class SatelliteManager : MonoBehaviour
     {
-        // --- Singleton ---
+
         public static SatelliteManager Instance { get; private set; }
 
         private const string TleUrl = "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=TLE";
@@ -42,10 +42,10 @@ namespace Satellites
         [Header("Famous Satellite Models")]
         [Tooltip("Hubble Space Telescope Model")]
         public GameObject hubbleModelPrefab;
-        
+
         [Tooltip("Kepler Space Telescope Model")]
         public GameObject keplerModelPrefab;
-        
+
         [Tooltip("Sentinel 6 Model")]
         public GameObject sentinelModelPrefab;
 
@@ -60,11 +60,9 @@ namespace Satellites
 
         public DoubleSlider.Scripts.DoubleSlider altitudeSlider;
 
-        // --- Satellitenverwaltung ---
         private readonly List<Satellite> _satellites = new();
         public event Action<List<Satellite>> OnSatellitesLoaded;
 
-        // --- Jobs & NativeArrays ---
         private TransformAccessArray _transformAccessArray;
         private NativeArray<Sgp4> _propagators;
         private NativeArray<Vector3> _currentPositions;
@@ -72,10 +70,8 @@ namespace Satellites
 
         public bool satellitesActive = true;
 
-        // Dictionary für Famous Satellites
         private Dictionary<int, GameObject> famousModelPrefabs;
 
-        // --- Unity Lifecycle ---
         void Awake()
         {
             if (Instance != null && Instance != this)
@@ -87,16 +83,15 @@ namespace Satellites
         void Start()
         {
             Debug.Log("SatelliteManager: Start");
-            
-            // Famous Models Dictionary initialisieren
+
             famousModelPrefabs = new Dictionary<int, GameObject>
             {
-                { 20580, hubbleModelPrefab },  // Hubble
-                { 56217, keplerModelPrefab },    // Kepler
-                { 46984, sentinelModelPrefab },    // Sentinel 6
-				{ 63147, starlinkModelPrefab }    // Starlink
+                { 20580, hubbleModelPrefab },
+                { 56217, keplerModelPrefab },
+                { 46984, sentinelModelPrefab },
+				{ 63147, starlinkModelPrefab }
             };
-            
+
             EnableGpuInstancing();
             FetchTleData();
             AllocateTransformAccessArray();
@@ -172,12 +167,12 @@ namespace Satellites
             try
             {
                 Debug.Log($"[SatelliteManager] Starte TLE-Download von: {TleUrl}");
-        
+
                 var provider = new CachingRemoteTleProvider(true, TimeSpan.FromHours(12), "cacheTle.txt", new Uri(TleUrl));
                 var data = provider.GetTles();
-        
+
                 Debug.Log($"[SatelliteManager] TLE Data: Gefunden: {data.Count} Satelliten");
-        
+
                 if (data.Count == 0)
                 {
                     Debug.LogError("[SatelliteManager] FEHLER: Keine TLE-Daten erhalten!");
@@ -202,12 +197,11 @@ namespace Satellites
         private bool CreateSatellite(Tle tle)
         {
             if (_tooNearIss.Contains((int)tle.NoradNumber)) return true;
-            
+
             var satelliteGo = Instantiate(satellitePrefab, satelliteParent.transform);
             var satellite = satelliteGo.GetComponent<Satellite>();
 
-            // Übergebe auch famous models
-            var modelApplied = satellite.Init(tle, satelliteModelPrefabs, globalSpaceMaterial, 
+            var modelApplied = satellite.Init(tle, satelliteModelPrefabs, globalSpaceMaterial,
                                              issModelPrefab, famousModelPrefabs);
             _satellites.Add(satellite);
             return modelApplied;

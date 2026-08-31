@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -28,7 +28,7 @@ public class LocationDatabase
 
 public class GeoNamesSearchFromJSON : MonoBehaviour
 {
-    /* ---------- Inspector-Referenzen ---------- */
+
     [Header("GeoNames JSON")]
     public TextAsset geoJson;
 
@@ -52,13 +52,12 @@ public class GeoNamesSearchFromJSON : MonoBehaviour
     [Header("Settings")]
     public int itemsPerPage = 20;
 
-    /* ---------- interne Felder ---------- */
     private readonly Dictionary<string, LocationEntry> _lookup = new();
 
     private int _currentPage = 0;
     private int _totalPages = 1;
 
-    public TextMeshProUGUI foundPlacesText;    
+    public TextMeshProUGUI foundPlacesText;
 
     private List<LocationEntry> _nameAsc;
     private List<LocationEntry> _nameDesc;
@@ -85,7 +84,6 @@ public class GeoNamesSearchFromJSON : MonoBehaviour
     "Buenos Aires","Ottawa","Canberra","Pretoria","Nairobi","Jakarta","Seoul","Bangkok"
 };
 
-    /* ---------- Lebenszyklus ---------- */
     private void Awake()
     {
         var db = JsonUtility.FromJson<LocationDatabase>(geoJson.text);
@@ -100,7 +98,7 @@ public class GeoNamesSearchFromJSON : MonoBehaviour
         _nameAsc = _allLocations.OrderBy(l => l.nameLower).ToList();
         _nameDesc = _nameAsc.AsEnumerable().Reverse().ToList();
 
-        _filtered = new List<LocationEntry>(_allLocations);  
+        _filtered = new List<LocationEntry>(_allLocations);
         _totalPages = Mathf.Max(1, Mathf.CeilToInt((float)_filtered.Count / itemsPerPage));
 
         var famousHash = new HashSet<string>(_famous, StringComparer.OrdinalIgnoreCase);
@@ -203,7 +201,6 @@ public class GeoNamesSearchFromJSON : MonoBehaviour
 
         _currentPage = Mathf.Clamp(index, 0, _totalPages - 1);
 
-        /* Buttons aktivieren / deaktivieren */
         bool first = _currentPage == 0;
         bool last = _currentPage == _totalPages - 1;
 
@@ -254,7 +251,6 @@ public class GeoNamesSearchFromJSON : MonoBehaviour
         pageLabel.text = L("GameScene", "PageLabel", 1, _totalPages);
     }
 
-    /* ---------- Selektion ---------- */
     private void OnItemSelected(string placeName)
     {
         LocationEntry entry = _lookup[placeName];
@@ -266,7 +262,7 @@ public class GeoNamesSearchFromJSON : MonoBehaviour
 
     private IEnumerator SwitchSpaceThenZoom(LocationEntry entry)
     {
-        /* Zoom-Logik unverändert aus GeoNamesSearchFromJSON */
+
         if (Mathf.Abs(zoomController.targetCamera.fieldOfView - zoomController.spaceFov) < 0.1f)
         {
             georeference.latitude = entry.lat;
@@ -316,7 +312,7 @@ public class GeoNamesSearchFromJSON : MonoBehaviour
                 break;
 
             case FilterMode.Famous:
-                _filtered = _famousList;   
+                _filtered = _famousList;
                 break;
 
             case FilterMode.NameAscending:

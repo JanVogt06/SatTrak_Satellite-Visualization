@@ -31,7 +31,7 @@ public class MenuManager : MonoBehaviour
     public Toggle showFpsToggle;
     private const string PrefKey = "ShowFPS";
 
-    public TMP_Dropdown languageDropdown;          
+    public TMP_Dropdown languageDropdown;
     private const string LocalePrefKey = "LocaleIndex";
 
     private string tableName = "MainMenuTable";
@@ -57,9 +57,9 @@ public class MenuManager : MonoBehaviour
     void Awake()
     {
         int savedIndex = PlayerPrefs.GetInt(LocalePrefKey, 0);
-        ApplyLocale(savedIndex);                               
+        ApplyLocale(savedIndex);
 
-        UpdateLanguageDropdown();                              
+        UpdateLanguageDropdown();
         UpdateQualityDropdown();
 
         LocalizationSettings.SelectedLocaleChanged += _ =>
@@ -99,7 +99,6 @@ public class MenuManager : MonoBehaviour
         languageDropdown.options = opts;
         languageDropdown.RefreshShownValue();
 
-        /* Index synchronisieren, falls Locale extern geändert wurde */
         int current = LocalizationSettings.AvailableLocales.Locales
                        .IndexOf(LocalizationSettings.SelectedLocale);
         languageDropdown.SetValueWithoutNotify(current);
@@ -224,7 +223,6 @@ public class MenuManager : MonoBehaviour
     {
         QualitySettings.SetQualityLevel(index, true);
     }
-
 
     void InitializeResolutionDropdown()
     {

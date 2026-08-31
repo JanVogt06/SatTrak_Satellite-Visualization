@@ -25,13 +25,13 @@ namespace Satellites
         private bool _isSpecial;
 
         [Header("Highlight")]
-        public Material highlightMaterial;         
+        public Material highlightMaterial;
 
-        private GameObject _highlightShell;        
+        private GameObject _highlightShell;
 
         void Start()
         {
-            // Erstelle Space Sphere NICHT in Start, sondern erst wenn das Modell gesetzt wird
+
             if (_modelInstance != null)
                 UpdateVisibility();
         }
@@ -47,7 +47,7 @@ namespace Satellites
 
         public void SetHighlight(bool state)
         {
-            // bei erstem Aufruf Hülle erzeugen
+
             if (_highlightShell == null) CreateHighlightShell();
             _highlightShell.SetActive(state);
         }
@@ -59,39 +59,35 @@ namespace Satellites
             _highlightShell.transform.SetParent(transform, false);
             Destroy(_highlightShell.GetComponent<Collider>());
 
-            // fester Durchmesser 10 × 10 × 10
             _highlightShell.transform.localScale = Vector3.one * 10f;
 
             var mr = _highlightShell.GetComponent<MeshRenderer>();
             mr.sharedMaterial = highlightMaterial;
             mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             mr.receiveShadows = false;
-            mr.material.renderQueue = 3100;   // immer im Vordergrund
+            mr.material.renderQueue = 3100;
 
             _highlightShell.SetActive(false);
         }
 
-        public bool SetModel(GameObject[] satelliteModelPrefabs, Material globalSpaceMaterial, 
+        public bool SetModel(GameObject[] satelliteModelPrefabs, Material globalSpaceMaterial,
                             bool isSpecial = false, GameObject specialModelPrefab = null)
         {
             _isSpecial = isSpecial;
-            _isISS = false; // Wird später gesetzt wenn nötig
+            _isISS = false;
 
             GameObject modelToUse;
 
-            // Wenn es ein spezielles Modell gibt
             if (_isSpecial && specialModelPrefab != null)
             {
                 modelToUse = specialModelPrefab;
-                
-                // Prüfen ob es die ISS ist für Space-Mode Hervorhebung
-                // Versuche verschiedene Wege, die Satellite-Komponente zu finden
+
                 var satellite = GetComponent<Satellite>();
                 if (satellite == null)
                     satellite = GetComponentInParent<Satellite>();
                 if (satellite == null && transform.parent != null)
                     satellite = transform.parent.GetComponent<Satellite>();
-                    
+
                 if (satellite != null)
                 {
                     if (satellite.IsISS)
@@ -102,7 +98,7 @@ namespace Satellites
             }
             else
             {
-                // Sonst zufälliges Modell
+
                 if (!TryGetRandomModelPrefab(satelliteModelPrefabs, out modelToUse))
                     return false;
             }
@@ -125,18 +121,16 @@ namespace Satellites
 
         private bool TryApplyModel(GameObject modelPrefab, Material globalSpaceMaterial)
         {
-            // Lösche altes Modell falls vorhanden
+
             if (_modelInstance != null)
             {
                 Destroy(_modelInstance);
             }
 
-            // Instanziiere das komplette Modell als Child
             _modelInstance = Instantiate(modelPrefab, transform);
             _modelInstance.transform.localPosition = Vector3.zero;
             _modelInstance.transform.localRotation = Quaternion.identity;
 
-            // Prüfe ob es Renderer gibt
             var renderers = _modelInstance.GetComponentsInChildren<MeshRenderer>();
             if (renderers.Length == 0)
             {
@@ -146,10 +140,8 @@ namespace Satellites
 
             _spaceMaterial = globalSpaceMaterial;
 
-            // Skaliere das gesamte Modell
             NormalizeSatelliteSize();
 
-            // Erstelle/Update Space Sphere - WICHTIG: Nach dem _isISS gesetzt wurde!
             CreateOrUpdateSpaceSphere();
 
             return true;
@@ -157,36 +149,32 @@ namespace Satellites
 
         private void CreateOrUpdateSpaceSphere()
         {
-            // Wenn schon vorhanden, lösche alte Sphere
+
             if (_spaceSphere != null)
             {
                 Destroy(_spaceSphere);
             }
-            
-            // Erstelle neue Space Sphere
+
             _spaceSphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             _spaceSphere.name = "SpaceSphere";
             _spaceSphere.transform.SetParent(transform);
             _spaceSphere.transform.localPosition = Vector3.zero;
 
-            // NUR ISS größer machen
             float size = _isISS ? 50f : 5f;
             _spaceSphere.transform.localScale = Vector3.one * size;
 
-            // Entferne Collider für Performance
             var collider = _spaceSphere.GetComponent<Collider>();
             if (collider != null)
                 Destroy(collider);
 
-            // Material setzen
             var renderer = _spaceSphere.GetComponent<MeshRenderer>();
-            if (_isISS)  // NUR ISS bekommt gelbe Farbe
+            if (_isISS)
             {
-                // Erstelle ein neues Material für die ISS
+
                 Material issMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
                 issMaterial.color = Color.yellow;
                 issMaterial.EnableKeyword("_EMISSION");
-                issMaterial.SetColor("_EmissionColor", Color.yellow * 0.5f); // Leuchten
+                issMaterial.SetColor("_EmissionColor", Color.yellow * 0.5f);
                 renderer.sharedMaterial = issMaterial;
             }
             else if (_spaceMaterial != null)
@@ -195,11 +183,10 @@ namespace Satellites
             }
             else
             {
-                // Fallback Material
+
                 renderer.sharedMaterial = new Material(Shader.Find("Standard"));
             }
-            
-            // Initial verstecken oder zeigen basierend auf aktuellem Modus
+
             bool isEarthMode = zoomController && zoomController.targetCamera &&
                                zoomController.targetCamera.fieldOfView < fovThreshold;
             _spaceSphere.SetActive(!isEarthMode);
@@ -211,8 +198,8 @@ namespace Satellites
         }
 
         private void NormalizeSatelliteSize()
-        {        
-            // ISS und Famous Satellites bekommen gleiche Größe
+        {
+
             float targetSize = (_isISS || _isSpecial) ? 100000f : 40000f;
 
             var renderers = _modelInstance.GetComponentsInChildren<Renderer>();
@@ -239,7 +226,6 @@ namespace Satellites
             bool isEarthMode = zoomController && zoomController.targetCamera &&
                                zoomController.targetCamera.fieldOfView < fovThreshold;
 
-            // Einfach GameObject an/aus schalten
             _modelInstance.SetActive(isEarthMode);
             _spaceSphere.SetActive(!isEarthMode);
         }

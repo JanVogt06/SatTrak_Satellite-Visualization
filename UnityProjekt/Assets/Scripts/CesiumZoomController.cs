@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using CesiumForUnity;
 using Unity.Mathematics;
@@ -42,10 +42,9 @@ public class CesiumZoomController : MonoBehaviour
 
     public Slider zoomSlider;
 
-    // Neues Flag
     [Header("Day/Night System")]
     public bool useDayNightSystem = true;
-    
+
     private DayNightSystem dayNightSystem;
 
     public float nearEarth = 1f;
@@ -59,23 +58,20 @@ public class CesiumZoomController : MonoBehaviour
         zoomSlider.gameObject.SetActive(false);
 
         insideSat = false;
-        
-        // Finde DayNightSystem
+
         dayNightSystem = FindObjectOfType<DayNightSystem>();
-        
-        // Nur manuelle Kontrolle wenn KEIN Tag/Nacht-System
+
         if (!useDayNightSystem || dayNightSystem == null)
         {
             directionalLight.transform.eulerAngles = new Vector3(45f, -30f, 0f);
             directionalLight.intensity = 1.3f;
         }
-        
+
         spaceButton.interactable = false;
         spaceButton.GetComponent<Image>().sprite = spaceButtonDisabled;
         ZoomToSpace();
     }
 
-    // Helper-Methode
     private void SetLightIntensity(float intensity)
     {
         if (!useDayNightSystem || dayNightSystem == null)
@@ -86,7 +82,6 @@ public class CesiumZoomController : MonoBehaviour
 
     private void ApplyNearClip(bool space) =>
     targetCamera.nearClipPlane = space ? nearSpace : nearEarth;
-
 
     private void SetLightRotation(Quaternion rotation)
     {
@@ -134,7 +129,7 @@ public class CesiumZoomController : MonoBehaviour
         else
         {
             zoomSlider.gameObject.SetActive(false);
-            SetLightIntensity(1.3f); // GEÄNDERT: Helper-Methode verwenden
+            SetLightIntensity(1.3f);
             if (zoomRoutine != null) StopCoroutine(zoomRoutine);
             zoomRoutine = StartCoroutine(ZoomToPosition(spaceView, Quaternion.Euler(spaceRotation), true, 2.3f));
             georeference.latitude = 51.21796;
@@ -150,7 +145,7 @@ public class CesiumZoomController : MonoBehaviour
 
         zoomSlider.gameObject.SetActive(false);
 
-        SetLightIntensity(1.3f); // GEÄNDERT: Helper-Methode verwenden
+        SetLightIntensity(1.3f);
 
         searchPanelController.StopTracking();
 
@@ -184,21 +179,17 @@ public class CesiumZoomController : MonoBehaviour
             t += Time.deltaTime / 0;
             float smoothedT = Mathf.SmoothStep(0f, 1f, t);
 
-            // Aktuelle Position des Satelliten in Unity-Koordinaten
             Vector3 satWorldPos = sat.transform.position;
             double3 targetLLH = new double3(satWorldPos.x, satWorldPos.y, satWorldPos.z);
 
-            // Interpolierter LLH-Wert
             double3 currentLLH = math.lerp(startLLH, targetLLH, smoothedT);
             globeAnchor.longitudeLatitudeHeight = currentLLH;
 
-            // Interpolierte Rotation
             transform.rotation = Quaternion.Slerp(startRotation, targetRotation, smoothedT);
 
             yield return null;
         }
 
-        // Endposition exakt setzen
         Vector3 finalPos = sat.transform.position;
         globeAnchor.longitudeLatitudeHeight = new double3(finalPos.x, finalPos.y, finalPos.z);
         transform.rotation = targetRotation;
@@ -210,7 +201,7 @@ public class CesiumZoomController : MonoBehaviour
             orbitController.InitializeOrbit();
         }
 
-        SetLightIntensity(1.5f); 
+        SetLightIntensity(1.5f);
         insideSat = true;
 
         yield return new WaitForSeconds(1f);
@@ -227,7 +218,7 @@ public class CesiumZoomController : MonoBehaviour
             StartCoroutine(SpaceButton(space));
         }
 
-        SetCameraModeAbility(false);       
+        SetCameraModeAbility(false);
     }
 
     public IEnumerator SpaceButton(bool space)
@@ -242,7 +233,7 @@ public class CesiumZoomController : MonoBehaviour
     {
         if (insideSat == true)
         {
-            SetLightRotation(targetCamera.transform.rotation); // GEÄNDERT: Helper-Methode verwenden
+            SetLightRotation(targetCamera.transform.rotation);
         }
     }
 
@@ -280,19 +271,19 @@ public class CesiumZoomController : MonoBehaviour
             spaceButton.interactable = true;
             spaceButton.GetComponent<Image>().sprite = spaceButtonNormal;
             insideSat = false;
-            SetLightIntensity(1.3f); // GEÄNDERT: Helper-Methode verwenden
-            SetLightRotation(Quaternion.Euler(-90f, 0f, 0f)); // GEÄNDERT: Helper-Methode verwenden
+            SetLightIntensity(1.3f);
+            SetLightRotation(Quaternion.Euler(-90f, 0f, 0f));
         }
         else
         {
             insideSat = false;
-            SetLightIntensity(1.3f); // GEÄNDERT: Helper-Methode verwenden (reduziert von 50)
-            SetLightRotation(Quaternion.Euler(90f, 0f, 0f)); // GEÄNDERT: Helper-Methode verwenden
+            SetLightIntensity(1.3f);
+            SetLightRotation(Quaternion.Euler(90f, 0f, 0f));
         }
 
         ApplyNearClip(space);
 
-        SetCameraModeAbility(!space);  
+        SetCameraModeAbility(!space);
     }
 
     IEnumerator AnimateFOV(float from, float to)

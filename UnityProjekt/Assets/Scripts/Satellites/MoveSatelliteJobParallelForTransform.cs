@@ -29,7 +29,7 @@ namespace Satellites
             {
                 position = new Vector3(0, 0, 0);
             }
-            
+
             Positions[index] = position;
             transform.position = position;
         }

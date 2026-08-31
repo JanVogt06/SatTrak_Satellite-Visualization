@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -94,7 +94,7 @@ public class SearchPanelController : MonoBehaviour
 
     public DefaultStuff infoPanelAnimation;
 
-    public GameObject famousInfoPanel;               
+    public GameObject famousInfoPanel;
     public TextMeshProUGUI famousInfoText;
 
     private enum FilterMode
@@ -195,11 +195,11 @@ public class SearchPanelController : MonoBehaviour
                 : L("GameScene", "PageLabel", currentPage + 1, totalPages);
 
             if (famousInfoPanel.activeSelf && trackedSatellite != null)
-                ShowSatelliteInfo(trackedSatellite);         
+                ShowSatelliteInfo(trackedSatellite);
         };
 
-        ApplyCurrentFilter();  
-        ShowPage(0);          
+        ApplyCurrentFilter();
+        ShowPage(0);
     }
 
     public void ResetHighlight()
@@ -286,7 +286,7 @@ public class SearchPanelController : MonoBehaviour
                                     sat => sat.gameObject.name,
                                     sat => sat.OrbitPropagator.Orbit.Perigee);
 
-            ApplyCurrentFilter();                             
+            ApplyCurrentFilter();
         };
 
         theUI1.SetActive(true);
@@ -322,7 +322,6 @@ public class SearchPanelController : MonoBehaviour
             trackedSatellite.modelController.SetHighlight(t >= 0.4f);
     }
 
-
     public void ResetZoomSlider()
     {
         zoomSlider.SetValueWithoutNotify(defaultSliderPos);
@@ -334,7 +333,6 @@ public class SearchPanelController : MonoBehaviour
             trackedSatellite.modelController.SetHighlight(false);
     }
 
-
     private void ShowSatelliteInfo(Satellite satellite)
     {
         OrbitToggle.isOn = satellite.orbit.ShouldCalculateOrbit;
@@ -342,7 +340,7 @@ public class SearchPanelController : MonoBehaviour
         {
             infoPanelAnimation.ResetPanelAnimation();
             infoPanel.SetActive(false);
-            famousInfoPanel.SetActive(false);   
+            famousInfoPanel.SetActive(false);
             return;
         }
 
@@ -411,7 +409,6 @@ public class SearchPanelController : MonoBehaviour
         ApplyCurrentFilter();
     }
 
-
     private void ShowPage(int pageIndex)
     {
         if (filteredSatelliteNames.Count == 0)
@@ -465,7 +462,6 @@ public class SearchPanelController : MonoBehaviour
 
         LayoutRebuilder.ForceRebuildLayoutImmediate(contentParent);
     }
-
 
     public void OnItemSelected(string itemName)
     {
@@ -603,7 +599,7 @@ public class SearchPanelController : MonoBehaviour
             _allTrackedSatellites.Add(trackedSatellite, trackGo);
             trackedSatellite.orbit.ToggleCalculateOrbit(true, color);
         }
-        else if (!visible && hasEntry)           
+        else if (!visible && hasEntry)
         {
             Destroy(trackGo);
             _allTrackedSatellites.Remove(trackedSatellite);
@@ -612,7 +608,6 @@ public class SearchPanelController : MonoBehaviour
 
         OrbitToggle.SetIsOnWithoutNotify(trackedSatellite.orbit.ShouldCalculateOrbit);
     }
-
 
     private void LateUpdate()
     {
@@ -656,7 +651,7 @@ public class SearchPanelController : MonoBehaviour
         foreach (var (satellite, go) in _allTrackedSatellites)
         {
             Destroy(go);
-            satellite.orbit.ToggleCalculateOrbit(false);   
+            satellite.orbit.ToggleCalculateOrbit(false);
         }
         _allTrackedSatellites.Clear();
 

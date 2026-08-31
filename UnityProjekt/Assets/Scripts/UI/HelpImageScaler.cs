@@ -1,16 +1,12 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// Keeps an Image scaled to a max % of its parent width (no stretch, centred).
-/// Safe against execution order & missing components.
-/// </summary>
 [RequireComponent(typeof(Image))]
 [RequireComponent(typeof(LayoutElement))]
 public class HelpImageScaler : MonoBehaviour, ILayoutSelfController
 {
     [Range(0.1f, 1f)]
-    [SerializeField] float maxRelativeWidth = 0.8f;  // 80 %
+    [SerializeField] float maxRelativeWidth = 0.8f;
 
     Image         img;
     LayoutElement le;
@@ -25,17 +21,15 @@ public class HelpImageScaler : MonoBehaviour, ILayoutSelfController
         if (img) img.preserveAspect = true;
     }
 
-    /* Called by the UI-system during a layout pass */
     public void SetLayoutHorizontal() => Adjust();
     public void SetLayoutVertical()   => Adjust();
 
     void Adjust()
     {
-        /* **Guard-clauses** : bail out if something is missing */
+
         if (img == null || le == null || rt == null || img.sprite == null)
             return;
 
-        /* Parent width – if parent is disabled, return */
         RectTransform parentRT = rt.parent as RectTransform;
         if (parentRT == null) return;
 

@@ -32,10 +32,8 @@ public class SatelliteShowHide : MonoBehaviour
             searchPanelController.openButton.GetComponent<Image>().sprite = searchPanelController.disabledSatButton;
         }
 
-        // Sichtbarkeit
         satelliteParent.SetActive(state);
 
-        // Logik stoppen
         SatelliteManager.Instance.satellitesActive = state;
     }
 

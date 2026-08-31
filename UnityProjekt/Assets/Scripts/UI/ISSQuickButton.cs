@@ -9,9 +9,9 @@ public class ISSQuickButton : MonoBehaviour
     [Header("References")]
     public Button issButton;
     public SearchPanelController searchPanelController;
-    
+
     private Satellite issSatellite;
-    
+
     void Start()
     {
         if (issButton == null || searchPanelController == null)
@@ -19,22 +19,20 @@ public class ISSQuickButton : MonoBehaviour
             Debug.LogError("ISS Button oder SearchPanelController nicht zugewiesen!");
             return;
         }
-        
-        // WICHTIG: Warte bis Satelliten geladen sind!
+
         StartCoroutine(WaitForISS());
     }
-    
+
     IEnumerator WaitForISS()
     {
-        // Warte bis SatelliteManager fertig ist
+
         yield return new WaitForSeconds(2f);
-        
-        // Finde die ISS
+
         var satellites = SatelliteManager.Instance.GetAllSatellites();
         Debug.Log($"Gefundene Satelliten: {satellites.Count}");
-        
+
         issSatellite = satellites.FirstOrDefault(s => s.IsISS);
-        
+
         if (issSatellite != null)
         {
             Debug.Log($"ISS gefunden: {issSatellite.name}");
@@ -43,25 +41,24 @@ public class ISSQuickButton : MonoBehaviour
         else
         {
             Debug.LogWarning("ISS nicht gefunden! Suche nach Namen...");
-            
-            // Suche nach ISS im Namen
-            var possibleISS = satellites.Where(s => 
-                s.name.Contains("25544") || 
+
+            var possibleISS = satellites.Where(s =>
+                s.name.Contains("25544") ||
                 s.name.ToUpper().Contains("ISS") ||
                 s.name.Contains("ZARYA")
             ).ToList();
-            
+
             foreach(var sat in possibleISS)
             {
                 Debug.Log($"Mögliche ISS gefunden: {sat.name}");
             }
         }
     }
-    
+
     void OnISSButtonClick()
     {
         Debug.Log("ISS Button geklickt!");
-        
+
         if (issSatellite != null && searchPanelController != null)
         {
             searchPanelController.OnItemSelected(issSatellite.name);

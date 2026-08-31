@@ -1,4 +1,4 @@
-﻿using Satellites;
+using Satellites;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -89,7 +89,6 @@ public class FreeFlyCamera : MonoBehaviour
 
     [SerializeField] private Image crosshairImage;
 
-
     [SerializeField] private SatelliteLabelUI satelliteLabelUI;
     [SerializeField] private float maxSelectionAngle = 0.2f;
     [SerializeField] private float maxDistance = 1000000f;
@@ -103,14 +102,11 @@ public class FreeFlyCamera : MonoBehaviour
     public Sprite inspectorNormalSprite;
     public Sprite inspectorUnavailableSprite;
 
-
-
     public Color activeColor = new Color(1f, 0.7058824f, 0f, 1f);
     public Color inactiveColor = Color.white;
 
     public bool cameraModeAllowed = true;
     public bool inspectorModeAllowed = true;
-
 
 #if UNITY_EDITOR
     private void OnValidate()
@@ -184,8 +180,6 @@ public class FreeFlyCamera : MonoBehaviour
         inspectorIcon.color = !_cursorLocked ? activeColor : inactiveColor;
     }
 
-
-
     private Satellite FindNearestLookingAtSatellite()
     {
         var allSats = SatelliteManager.Instance.GetAllSatellites();
@@ -213,7 +207,6 @@ public class FreeFlyCamera : MonoBehaviour
 
         return closest;
     }
-
 
     private void CalculateCurrentIncrease(bool moving)
     {
@@ -292,7 +285,6 @@ public class FreeFlyCamera : MonoBehaviour
         }
 
     }
-
 
     private void FixedUpdate()
     {

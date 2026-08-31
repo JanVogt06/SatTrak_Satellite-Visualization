@@ -1,4 +1,4 @@
-﻿using TMPro;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,10 +7,10 @@ public class SatelliteLabelUI : MonoBehaviour
     public TextMeshProUGUI labelText;
     public Transform target;
     public Camera mainCamera;
-     
+
     public SearchPanelController controller;
 
-    private void Awake()                   
+    private void Awake()
     {
         if (TryGetComponent(out Button btn))
             btn.onClick.AddListener(OnLabelClicked);

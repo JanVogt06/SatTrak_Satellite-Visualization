@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 public class HelpContentBuilder : MonoBehaviour
 {
-    /* ───────── Inspector ───────── */
+
     [Header("Scroll View & Container")]
     [SerializeField] private ScrollRect scrollRect;
     [SerializeField] private Transform contentRoot;
@@ -32,7 +32,6 @@ public class HelpContentBuilder : MonoBehaviour
     [SerializeField] private float spacerHeight = 12f;
     [SerializeField] private float bottomSpacerHeight = 80f;
 
-    /* ───────── Regex ───────── */
     readonly Regex h1Rx     = new(@"^#\s+(.*)");
     readonly Regex h2Rx     = new(@"^##\s+(.*)");
     readonly Regex h3Rx     = new(@"^###\s+(.*)");
@@ -44,14 +43,11 @@ public class HelpContentBuilder : MonoBehaviour
 
     const string imageFolder = "HelpImages";
 
-    /* ───────── Runtime ───────── */
     readonly List<(string title, RectTransform section)> tocEntries = new();
     RectTransform currentThumbRow = null;
 
-    /* ───────── Entry ───────── */
     void Start() => Build();
 
-    /* ───────── Build ───────── */
     void Build()
     {
         if (!markdownFile) { Debug.LogError($"{name}: Markdown fehlt"); return; }
@@ -60,21 +56,18 @@ public class HelpContentBuilder : MonoBehaviour
         {
             string line = raw.TrimEnd('\r');
 
-            /* Leerzeile "\" */
             if (line.Trim() == "\\")
             {
                 AddSpacer(spacerHeight);
                 continue;
             }
 
-            /* H1 */
             if (h1Rx.IsMatch(line))
             {
                 InstantiateTMP(h1Prefab, h1Rx.Match(line).Groups[1].Value.Trim());
                 continue;
             }
 
-            /* H2 (TOC) */
             if (h2Rx.IsMatch(line))
             {
                 string title = h2Rx.Match(line).Groups[1].Value.Trim();
@@ -83,14 +76,12 @@ public class HelpContentBuilder : MonoBehaviour
                 continue;
             }
 
-            /* H3 */
             if (h3Rx.IsMatch(line))
             {
                 InstantiateTMP(h3Prefab, h3Rx.Match(line).Groups[1].Value.Trim());
                 continue;
             }
 
-            /* Thumbnails (all thumbs in same markdown line share a row) */
             if (thumbRx.IsMatch(line))
             {
                 int thumbCountInLine = thumbRx.Matches(line).Count;
@@ -102,7 +93,7 @@ public class HelpContentBuilder : MonoBehaviour
 
                     if (currentThumbRow.TryGetComponent(out HorizontalLayoutGroup rowHLG))
                     {
-                        rowHLG.padding.left = 30;          // linker Rand
+                        rowHLG.padding.left = 30;
                         rowHLG.SetLayoutHorizontal();
                     }
                 }
@@ -118,7 +109,6 @@ public class HelpContentBuilder : MonoBehaviour
                 continue;
             }
 
-            /* Full-size Image */
             if (imageRx.IsMatch(line))
             {
                 string shortName = Path.GetFileNameWithoutExtension(
@@ -127,7 +117,6 @@ public class HelpContentBuilder : MonoBehaviour
                 continue;
             }
 
-            /* Bullet */
             if (bulletRx.IsMatch(line))
             {
                 var m = bulletRx.Match(line);
@@ -137,7 +126,6 @@ public class HelpContentBuilder : MonoBehaviour
                 continue;
             }
 
-            /* Plain text */
             if (!string.IsNullOrWhiteSpace(line))
             {
                 InstantiateTMP(bodyPrefab, ParseInline(line));
@@ -150,20 +138,16 @@ public class HelpContentBuilder : MonoBehaviour
         LayoutRebuilder.ForceRebuildLayoutImmediate(contentRoot as RectTransform);
     }
 
-    /* ───────── TOC ───────── */
-    /* ───────── TOC  (no extra stack, 4 buttons per row) ───────── */
     void BuildTOC()
     {
         if (tocEntries.Count == 0 || tocContainerPrefab == null
             || tocButtonPrefab == null || scrollRect == null) return;
 
-        // helper to spawn a new horizontal row directly under contentRoot
         RectTransform NewRow(int siblingIndex)
         {
             var row = Instantiate(tocContainerPrefab, contentRoot)
                     .GetComponent<RectTransform>();
 
-            // linker Margin
             if (row.TryGetComponent(out HorizontalLayoutGroup hlg))
             {
                 hlg.padding.left = 30;
@@ -174,14 +158,13 @@ public class HelpContentBuilder : MonoBehaviour
             return row;
         }
 
-        /* erste Zeile direkt unter dem H1-Header (Index 1) */
         int            nextSibling = 1;
         RectTransform  currentRow  = NewRow(nextSibling++);
         int            btnInRow    = 0;
 
         foreach (var entry in tocEntries)
         {
-            // nach 4 Buttons neue Zeile erstellen
+
             if (btnInRow >= 4)
             {
                 currentRow = NewRow(nextSibling++);
@@ -198,8 +181,6 @@ public class HelpContentBuilder : MonoBehaviour
         }
     }
 
-
-    /* ───────── Helpers ───────── */
     RectTransform InstantiateTMP(GameObject prefab, string text)
     {
         var go = Instantiate(prefab, contentRoot);
@@ -237,7 +218,6 @@ public class HelpContentBuilder : MonoBehaviour
         img.sprite = spr;
         img.preserveAspect = true;
 
-        /* Breite: 600 px wenn allein, sonst max 120 px */
         float w = isSingle ? 600f : Mathf.Min(120f, spr.rect.width);
         float h = w * spr.rect.height / spr.rect.width;
 

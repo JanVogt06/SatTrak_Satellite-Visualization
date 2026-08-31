@@ -13,15 +13,15 @@ namespace Heatmap
         public EarthDayNightOverlay EarthDayNightOverlay;
         public DayNightSystem DayNightSystem;
         public Toggle DayNightSystemToggle;
-        
+
         public bool isVisible = false;
 
         public GameObject heatMapHelper;
-        
+
         private Mesh _mesh;
         private MeshRenderer _meshRenderer;
         private const float InfluenceRadius = 1_000_000f;
-        private const float MaxDensityCount = 100f; // später ggf. dynamisch skalieren
+        private const float MaxDensityCount = 100f;
 
         private void Start()
         {
@@ -45,7 +45,6 @@ namespace Heatmap
         {
             if (!isVisible) return;
 
-            // Daten vorbereiten
             Vector3[] meshVertices = _mesh.vertices;
             var vertexWorldPositions = new NativeArray<float3>(meshVertices.Length, Allocator.TempJob);
             var satelliteFloat3 = new NativeArray<float3>(satellitePositions.Length, Allocator.TempJob);
@@ -54,7 +53,6 @@ namespace Heatmap
             float3 sphereCenter = transform.position;
             float sphereRadius = transform.lossyScale.x * 0.5f;
 
-            // Transformiere die Vertices ins Weltkoordinatensystem
             for (int i = 0; i < meshVertices.Length; i++)
             {
                 Vector3 worldPos = transform.TransformPoint(meshVertices[i]);
@@ -80,10 +78,8 @@ namespace Heatmap
             JobHandle handle = job.Schedule(vertexWorldPositions.Length, 32);
             handle.Complete();
 
-            // Farben ins Mesh schreiben
             _mesh.colors = colors.ToArray();
 
-            // Speicher freigeben
             vertexWorldPositions.Dispose();
             satelliteFloat3.Dispose();
             colors.Dispose();

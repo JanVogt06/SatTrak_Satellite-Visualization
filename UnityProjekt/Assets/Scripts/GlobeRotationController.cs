@@ -1,4 +1,4 @@
-﻿using CesiumForUnity;
+using CesiumForUnity;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -28,7 +28,7 @@ public class GlobeRotationController : MonoBehaviour
     private float currentYaw, currentPitch;
     private float distance;
 
-    private Transform currentTarget; // NEU: aktives Ziel (z.B. Satellit oder null für Erde)
+    private Transform currentTarget;
 
     void Start()
     {
@@ -45,9 +45,9 @@ public class GlobeRotationController : MonoBehaviour
 
         if (EventSystem.current.IsPointerOverGameObject())
         {
-            dragging = false;         
-            inertia = Vector2.zero;   
-            return;                   
+            dragging = false;
+            inertia = Vector2.zero;
+            return;
         }
 
         if (currentTarget != null)

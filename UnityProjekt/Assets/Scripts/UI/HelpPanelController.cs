@@ -1,21 +1,19 @@
 using UnityEngine;
-using UnityEngine.UI;   // nur nötig, falls du Button-Events hier anbinden willst
+using UnityEngine.UI;
 
 public class HelpPanelController : MonoBehaviour
 {
     [Header("UI-Referenzen")]
-    [SerializeField] private GameObject helpPanel;      // Root des Panels
-    [SerializeField] private CanvasGroup canvasGroup;   // Optional: fürs Fading
-    [SerializeField] private GameObject backButton;     // Der Zurück-Button
+    [SerializeField] private GameObject helpPanel;
+    [SerializeField] private CanvasGroup canvasGroup;
+    [SerializeField] private GameObject backButton;
 
     private const float fadeDuration = 0.25f;
 
     void Awake()
     {
-        HideImmediate();      // alles ausblenden, bevor die Szene loslegt
+        HideImmediate();
     }
-
-    /* ---------- Öffnen / Schließen (für Buttons) ---------- */
 
     public void ShowHelp()
     {
@@ -24,7 +22,7 @@ public class HelpPanelController : MonoBehaviour
 
         if (canvasGroup)
         {
-            canvasGroup.alpha = 0;                      // Startwert fürs Fade-In
+            canvasGroup.alpha = 0;
             Fade(0, 1, fadeDuration);
         }
     }
@@ -33,7 +31,7 @@ public class HelpPanelController : MonoBehaviour
     {
         if (canvasGroup)
         {
-            Fade(1, 0, fadeDuration, HideImmediate);   // erst ausblenden, dann deaktivieren
+            Fade(1, 0, fadeDuration, HideImmediate);
         }
         else
         {
@@ -41,15 +39,11 @@ public class HelpPanelController : MonoBehaviour
         }
     }
 
-    /* ---------- ESC-Shortcut optional ---------- */
-
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape) && helpPanel.activeSelf)
             HideHelp();
     }
-
-    /* ---------- Interne Hilfsroutinen ---------- */
 
     void HideImmediate()
     {
@@ -68,7 +62,7 @@ public class HelpPanelController : MonoBehaviour
         float e = 0f;
         while (e < t)
         {
-            e += Time.unscaledDeltaTime;               // reagiert auch, wenn TimeScale = 0
+            e += Time.unscaledDeltaTime;
             canvasGroup.alpha = Mathf.Lerp(a, b, e / t);
             yield return null;
         }

@@ -9,8 +9,8 @@ namespace Heatmap
     [BurstCompile]
     public struct HeatmapDensityJob : IJobParallelFor
     {
-        [ReadOnly] public NativeArray<float3> Vertices;      // vertex world positions
-        [ReadOnly] public NativeArray<float3> Satellites;    // raw satellite world positions
+        [ReadOnly] public NativeArray<float3> Vertices;
+        [ReadOnly] public NativeArray<float3> Satellites;
         [ReadOnly] public float InfluenceRadiusSqr;
         [ReadOnly] public float MaxDensityCount;
         [ReadOnly] public float3 SphereCenter;
@@ -25,7 +25,7 @@ namespace Heatmap
 
             for (int i = 0; i < Satellites.Length; i++)
             {
-                // Projektion direkt hier
+
                 float3 direction = math.normalize(Satellites[i] - SphereCenter);
                 float3 projected = SphereCenter + direction * SphereRadius;
 

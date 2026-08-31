@@ -43,18 +43,16 @@ namespace TimeSlider
             LocalizationSettings.SelectedLocaleChanged += _ => UpdateVisuals();
         }
 
-        private void Start() 
+        private void Start()
         {
             _currentZoom = _sliderSteps[0];
             var eventTrigger = dateSlider.gameObject.AddComponent<EventTrigger>();
-            
-            // Begin Drag
+
             var beginDragEntry = new EventTrigger.Entry();
             beginDragEntry.eventID = EventTriggerType.BeginDrag;
             beginDragEntry.callback.AddListener((data) => { OnBeginDrag(); });
             eventTrigger.triggers.Add(beginDragEntry);
-            
-            // End Drag
+
             var endDragEntry = new EventTrigger.Entry();
             endDragEntry.eventID = EventTriggerType.EndDrag;
             endDragEntry.callback.AddListener((data) => { OnEndDrag(); });
@@ -132,18 +130,9 @@ namespace TimeSlider
             {
                 OnScroll(scroll);
             }
-            
-            // Update simulation time if not dragging
+
             _simulationTimeSeconds += Time.deltaTime * timeMultiplier;
             CurrentSimulatedTime = _simulationStartTime.AddSeconds(_simulationTimeSeconds);
-            // if (CurrentSimulatedTime > _currentZoom.ToMaxDate(CurrentSimulatedTime))
-            // {
-            //     if ((int)_currentZoom.Type < (int)_sliderSteps[0].Type)
-            //         _currentZoom
-            //     _simulationTimeSeconds = 0;
-            //     _simulationStartTime = _absoluteMinDate;
-            //     CurrentSimulatedTime = _absoluteMinDate;
-            // }
 
             if (!_isDragging)
                 dateSlider.value = _currentZoom.ToSliderValue(CurrentSimulatedTime);
@@ -155,7 +144,7 @@ namespace TimeSlider
         private void OnScroll(float scrollDelta)
         {
             int currentIndex = _sliderSteps.IndexOf(_currentZoom);
-            currentIndex -= (int)Mathf.Sign(scrollDelta); // Scroll up -> kleinerer Index -> gröber
+            currentIndex -= (int)Mathf.Sign(scrollDelta);
 
             currentIndex = Mathf.Clamp(currentIndex, 0, _sliderSteps.Count - 1);
             ChangeZoom(currentIndex);

@@ -9,11 +9,11 @@ using UnityEngine.UI;
 public class SceneSwitcher : MonoBehaviour
 {
     public static SceneSwitcher Instance;
-    
+
     [SerializeField] private Slider loadingSlider;
     [SerializeField] private TextMeshProUGUI progressText;
     [SerializeField] private GameObject loadingScreenGameObject;
-    private const float smoothSpeed = 0.5f; // Ann�herungsgeschwindigkeit des Sliders
+    private const float smoothSpeed = 0.5f;
 
     private void Awake()
     {
@@ -53,8 +53,7 @@ public class SceneSwitcher : MonoBehaviour
             UpdateUI(displayedProgress);
             yield return null;
         }
-        
-        // Letzten Rest auf 1.0f gl�tten
+
         while (displayedProgress < 1f)
         {
             displayedProgress = Mathf.MoveTowards(displayedProgress, 1f, smoothSpeed * Time.deltaTime);
@@ -62,7 +61,7 @@ public class SceneSwitcher : MonoBehaviour
             yield return null;
         }
 
-        yield return new WaitForSeconds(2.3f); // kurzer Moment bei 100 %
+        yield return new WaitForSeconds(2.3f);
         loadingScreenGameObject.SetActive(false);
     }
 
@@ -73,7 +72,7 @@ public class SceneSwitcher : MonoBehaviour
     }
 
     public void EndProgramm()
-    { 
+    {
         Application.Quit();
     }
 }

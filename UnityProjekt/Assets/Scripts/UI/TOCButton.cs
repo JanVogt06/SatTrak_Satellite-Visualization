@@ -6,8 +6,8 @@ using TMPro;
 [RequireComponent(typeof(LayoutElement))]
 public class TOCButton : MonoBehaviour
 {
-    [SerializeField] float horizontalPadding = 24f;   // 12 px links + rechts
-    [SerializeField] float scrollOffset      = 60f;   // Platz oberhalb der Überschrift
+    [SerializeField] float horizontalPadding = 24f;
+    [SerializeField] float scrollOffset      = 60f;
 
     RectTransform target;
     ScrollRect    scroll;
@@ -22,12 +22,10 @@ public class TOCButton : MonoBehaviour
         le    = GetComponent<LayoutElement>();
         label = GetComponentInChildren<TMP_Text>(true);
 
-        /* Breite = Textbreite + Padding */
         float w = label.GetPreferredValues(label.text).x + horizontalPadding;
         le.preferredWidth = w;
         le.flexibleWidth  = 0;
 
-        /* keine Zeilenumbrüche im Chip */
         label.enableWordWrapping = false;
 
         GetComponent<Button>().onClick.AddListener(ScrollToSection);
@@ -39,7 +37,6 @@ public class TOCButton : MonoBehaviour
         float contH   = scroll.content.rect.height;
         float secY    = Mathf.Abs(target.anchoredPosition.y);
 
-        /* zusätzlicher Abstand oberhalb der Überschrift */
         float adjustedY = Mathf.Max(0, secY - scrollOffset);
 
         float normPos = Mathf.Clamp01(adjustedY / (contH - viewH));

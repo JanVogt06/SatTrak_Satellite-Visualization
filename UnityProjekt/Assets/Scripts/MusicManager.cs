@@ -20,7 +20,7 @@ public class MusicManager : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject); 
+            Destroy(gameObject);
             return;
         }
 
@@ -39,7 +39,6 @@ public class MusicManager : MonoBehaviour
         savedVolumeBeforeMute = volume;
         ApplyVolume();
     }
-
 
     void Start()
     {
@@ -70,7 +69,6 @@ public class MusicManager : MonoBehaviour
         ApplyVolume();
     }
 
-
     public void SetVolume(float value)
     {
         value = Mathf.Clamp01(value);
@@ -85,7 +83,6 @@ public class MusicManager : MonoBehaviour
         PlayerPrefs.SetFloat(VolumeKey, volume);
         PlayerPrefs.Save();
     }
-
 
     public void ToggleMute()
     {
@@ -112,7 +109,6 @@ public class MusicManager : MonoBehaviour
         }
     }
 
-
     public void ApplyVolume()
     {
         if (audioSource == null)
@@ -123,7 +119,6 @@ public class MusicManager : MonoBehaviour
 
         audioSource.volume = isMuted ? 0f : volume;
     }
-
 
     public void PlayRandomTrack()
     {

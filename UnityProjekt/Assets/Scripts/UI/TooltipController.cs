@@ -6,7 +6,7 @@ public class TooltipController : MonoBehaviour,
                                   IPointerExitHandler
 {
     [SerializeField]
-    private GameObject infoPanel;   
+    private GameObject infoPanel;
 
     private void Awake()
     {

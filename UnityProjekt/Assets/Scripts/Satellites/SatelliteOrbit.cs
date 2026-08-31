@@ -23,7 +23,7 @@ namespace Satellites
         public void Initialize(Sgp4 propagator)
         {
             _orbitPropagator = propagator;
-            //shouldCalculateOrbit = name == "7646 STARLETTE";
+
         }
 
         public void Update()

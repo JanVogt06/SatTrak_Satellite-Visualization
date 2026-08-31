@@ -20,16 +20,16 @@ public sealed class ForceAspectRatio16x9 : MonoBehaviour
         float currentRatio = (float)Screen.width / Screen.height;
         if (Mathf.Approximately(currentRatio, targetRatio))
         {
-            cam.rect = new Rect(0, 0, 1, 1);      
+            cam.rect = new Rect(0, 0, 1, 1);
             return;
         }
 
-        if (currentRatio > targetRatio)          
+        if (currentRatio > targetRatio)
         {
             float inset = 1f - targetRatio / currentRatio;
             cam.rect = new Rect(inset * 0.5f, 0, 1f - inset, 1);
         }
-        else                                    
+        else
         {
             float inset = 1f - currentRatio / targetRatio;
             cam.rect = new Rect(0, inset * 0.5f, 1, 1f - inset);

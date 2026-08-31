@@ -8,7 +8,7 @@ public class MainMenuSatelliteSpawner : MonoBehaviour
     public float radius = 20f;
     public float heightRange = 5f;
     public float rotationSpeed = 30f;
-    public float forwardOffset = 30f; // Abstand vor der Kamera
+    public float forwardOffset = 30f;
 
     private List<GameObject> satellites = new();
     private List<Vector3> rotationAxes = new();
@@ -25,7 +25,7 @@ public class MainMenuSatelliteSpawner : MonoBehaviour
             var sat = satellites[i];
             if (sat != null)
             {
-                // Jeder Satellit rotiert um seine eigene zufällige Achse
+
                 sat.transform.Rotate(rotationAxes[i] * rotationSpeed * Time.deltaTime, Space.Self);
             }
         }
@@ -49,10 +49,10 @@ public class MainMenuSatelliteSpawner : MonoBehaviour
             var prefab = satellitePrefabs[Random.Range(0, satellitePrefabs.Length)];
             GameObject satellite = Instantiate(prefab, position, Quaternion.identity);
 
-            satellite.transform.LookAt(cam.position); // Optional: schaut zur Kamera
+            satellite.transform.LookAt(cam.position);
 
             satellites.Add(satellite);
-            rotationAxes.Add(Random.onUnitSphere); // zufällige 3D-Achse speichern
+            rotationAxes.Add(Random.onUnitSphere);
         }
     }
 }
