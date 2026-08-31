@@ -2,25 +2,24 @@
 
 Interactive 3D satellite visualization built in Unity. TLE orbital elements are pulled from
 CelesTrak and propagated with an SGP4 implementation to place more than 5000 active
-satellites on a streamed globe.
+satellites on a textured globe.
 
 ![SatTrak](screenshots/main-view.png)
 
 ## Status
 
-The globe is rendered with Cesium for Unity, which needs a personal Cesium Ion access token
-to stream terrain and imagery. The repository ships with a placeholder token, so a fresh
-clone will not render the earth until a token is supplied.
+Cesium has been removed. The globe is a generated WGS84 ellipsoid mesh textured with NASA
+Blue Marble imagery, and the georeference math lives in `Assets/Project/Scripts/Geo`. No
+account and no API key are needed to run the project.
 
-The planned next step is to drop that dependency and publish the project as a WebGL build on
-GitHub Pages. Cesium for Unity is a native plugin and has no WebGL target, so the globe has
-to be replaced before a browser build is possible.
+The remaining work towards a browser build is the asset budget: `cities.json` alone is
+189 MB and is parsed into roughly 700 MB of managed heap at startup, which no browser
+will survive.
 
 ## Requirements
 
 - Unity 2022.3.62f3
 - Git LFS
-- A Cesium Ion access token from https://cesium.com/ion/
 
 ## Setup
 
@@ -34,9 +33,7 @@ git lfs pull
 Without `git lfs pull` the satellite models and the city database stay 130-byte pointer
 files and the project will not run.
 
-Add `unity/` as a project in Unity Hub, open it, then paste your token under
-**Window → Cesium**. It is stored in
-`unity/Assets/CesiumSettings/Resources/CesiumIonServers/ion.cesium.com.asset`.
+Add `unity/` as a project in Unity Hub and open it.
 
 ## Controls
 
@@ -66,10 +63,10 @@ screenshots/                  README image
 unity/
   Assets/
     AddressableAssetsData/    Addressables configuration (fixed path)
-    CesiumSettings/           Cesium Ion server and token settings (fixed path)
     TextMesh Pro/             TextMesh Pro essentials (fixed path)
     Project/                  Everything written for this project
       Art/                    Animations, fonts, images, materials, UI sprites
+      Art/Earth/              Blue Marble texture and globe material (Git LFS)
       Audio/                  Background music
       Data/Cities/            GeoNames city database (Git LFS)
       Localization/           German and English string tables
@@ -98,7 +95,12 @@ unity/
 | `Satellites/SatelliteModelController` | Model and sphere switching per camera mode |
 | `Satellites/MoveSatelliteJobParallelForTransform` | Burst job moving satellite transforms |
 | `Satellites/ConversionExtensions` | SGP to Unity coordinate conversion |
-| `CesiumZoomController` | Transition between space and earth mode |
+| `Satellites/TleSource` | TLE download over UnityWebRequest with a 12 hour disk cache |
+| `Geo/Wgs84` | Ellipsoid math: geodetic and ECEF conversion, East-Up-North frame |
+| `Geo/Georeference` | Local frame origin, ECEF transforms, floating origin |
+| `Geo/GlobeAnchor` | Keeps a transform fixed to a geographic position |
+| `Geo/EarthGlobe` | Generates the textured globe mesh |
+| `ViewModeController` | Transition between space and earth mode |
 | `FreeFlyCamera` | First person camera for earth mode |
 | `GlobeRotationController` | Orbit camera around the globe |
 | `CameraFlySequence` | Scripted camera moves in the main menu |
@@ -126,13 +128,13 @@ unity/
 | `MusicManager` | Background music playback |
 | `CrosshairSelector`, `CrosshairSettings`, `CustomCursor` | Crosshair and cursor customization |
 | `MainMenuCameraMovement`, `MainMenuSatelliteSpawner`, `FlyingUIPhysics` | Main menu decoration |
-| `TerrainHeightClamp` | Keeps the camera above the terrain |
 
 ## Data sources
 
 - TLE data: [CelesTrak](https://celestrak.org/)
 - City database: [GeoNames](https://www.geonames.org/)
 - Satellite models: NASA
+- Earth texture: NASA Visible Earth, Blue Marble Next Generation (public domain)
 
 ## Credits
 
