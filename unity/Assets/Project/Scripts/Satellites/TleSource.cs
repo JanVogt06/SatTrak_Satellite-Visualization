@@ -13,6 +13,7 @@ namespace Satellites
     public class TleSource
     {
         private const string HeaderFormat = "u";
+        private const string UserAgent = "SatTrak (https://github.com/JanVogt06/SatTrak-SatelliteVisualization)";
 
         private readonly string _url;
         private readonly TimeSpan _maxAge;
@@ -38,6 +39,7 @@ namespace Satellites
 
             using (var request = UnityWebRequest.Get(_url))
             {
+                request.SetRequestHeader("User-Agent", UserAgent);
                 yield return request.SendWebRequest();
 
                 if (request.result == UnityWebRequest.Result.Success)
@@ -46,11 +48,16 @@ namespace Satellites
                     error = $"{request.result}: {request.error}";
             }
 
-            if (body != null && TryParse(body, out var downloaded))
+            if (body != null)
             {
-                WriteCache(body);
-                onLoaded(downloaded);
-                yield break;
+                if (TryParse(body, out var downloaded))
+                {
+                    WriteCache(body);
+                    onLoaded(downloaded);
+                    yield break;
+                }
+
+                error = $"response was not TLE data: \"{Summarize(body)}\"";
             }
 
             if (TryReadCache(TimeSpan.MaxValue, out var stale))
@@ -111,10 +118,19 @@ namespace Satellites
             tles = null;
 
             var lines = body
-                .Replace("\r\n", "\n")
                 .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
-            if (lines.Length < 3 || lines.Length % 3 != 0) return false;
+            int complete = (lines.Length / 3) * 3;
+            if (complete == 0) return false;
+
+            for (int i = 0; i < complete; i += 3)
+            {
+                if (!lines[i + 1].StartsWith("1 ") || !lines[i + 2].StartsWith("2 "))
+                    return false;
+            }
+
+            if (complete != lines.Length)
+                Array.Resize(ref lines, complete);
 
             var parsed = new Dictionary<int, Tle>();
             try
@@ -132,6 +148,12 @@ namespace Satellites
 
             tles = parsed;
             return true;
+        }
+
+        private static string Summarize(string body)
+        {
+            var text = body.Replace('\r', ' ').Replace('\n', ' ').Trim();
+            return text.Length <= 160 ? text : text.Substring(0, 160) + "...";
         }
     }
 }
