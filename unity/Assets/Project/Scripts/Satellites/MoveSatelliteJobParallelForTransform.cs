@@ -1,6 +1,5 @@
 using System;
 using CesiumForUnity;
-using DefaultNamespace;
 using Satellites.SGP.Propagation;
 using Unity.Collections;
 using Unity.Mathematics;

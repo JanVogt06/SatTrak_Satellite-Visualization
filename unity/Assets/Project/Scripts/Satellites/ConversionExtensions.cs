@@ -1,7 +1,7 @@
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace DefaultNamespace
+namespace Satellites
 {
     public static class ConversionExtensions
     {

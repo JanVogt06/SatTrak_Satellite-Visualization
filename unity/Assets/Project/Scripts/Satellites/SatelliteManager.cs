@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Assets.SimpleSpinner;
 using CesiumForUnity;
-using DefaultNamespace;
 using Heatmap;
 using Satellites.SGP.Propagation;
 using Satellites.SGP.TLE;
