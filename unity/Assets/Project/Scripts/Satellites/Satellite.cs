@@ -48,14 +48,5 @@ namespace Satellites
 
             return modelController.SetModel(satelliteModelPrefabs, globalSpaceMaterial, IsISS || IsFamous, specialModel);
         }
-
-        void Start()
-        {
-        }
-
-        void Update()
-        {
-
-        }
     }
 }
