@@ -42,13 +42,13 @@ public class SearchPanelController : MonoBehaviour
     private int currentPage = 0;
     private int totalPages = 0;
 
-    [Header("Suche")] public TMP_InputField searchInputField;
+    [Header("Search")] public TMP_InputField searchInputField;
     private List<string> filteredSatelliteNames = new List<string>();
 
     [Header("Info Panel")] public GameObject infoPanel;
     public Toggle OrbitToggle;
 
-    [Header("Zoom-Slider-Einstellungen")] public Slider zoomSlider;
+    [Header("Zoom Slider Settings")] public Slider zoomSlider;
     public float minDistance;
     public float maxDistance;
 

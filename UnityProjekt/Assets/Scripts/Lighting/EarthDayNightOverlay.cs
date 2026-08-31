@@ -16,7 +16,7 @@ public class EarthDayNightOverlay : MonoBehaviour
     public float terminatorSoftness = 0.5f;
 
     [Header("Sphere Settings")]
-    [Tooltip("Skalierungsfaktor für die Schattenkugel")]
+    [Tooltip("Scale factor for the shadow sphere")]
     public float sphereScale = 1.05f;
 
     private GameObject shadowSphere;

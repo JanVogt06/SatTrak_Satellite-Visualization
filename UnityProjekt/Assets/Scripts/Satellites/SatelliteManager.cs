@@ -33,10 +33,10 @@ namespace Satellites
         public TimeSlider.TimeSlider time;
 
         [Header("Satellite Models")]
-        [Tooltip("Liste der verfügbaren Satelliten-Modelle")]
+        [Tooltip("Available satellite models")]
         public GameObject[] satelliteModelPrefabs;
 
-        [Tooltip("Spezielles Modell für die ISS")]
+        [Tooltip("Dedicated ISS model")]
         public GameObject issModelPrefab;
 
         [Header("Famous Satellite Models")]
@@ -55,7 +55,7 @@ namespace Satellites
         private readonly List<int> _tooNearIss = new() { 63520, 49044, 62030, 63129, 63204 };
 
         [Header("Materials")]
-        [Tooltip("Material für Satelliten im Space-Modus")]
+        [Tooltip("Material for satellites in space mode")]
         public Material globalSpaceMaterial;
 
         public DoubleSlider.Scripts.DoubleSlider altitudeSlider;
@@ -251,11 +251,11 @@ namespace Satellites
             if (!mat.enableInstancing)
             {
                 mat.enableInstancing = true;
-                Debug.LogWarning($"GPU Instancing für Material {mat.name} wurde aktiviert");
+                Debug.LogWarning($"GPU instancing enabled for material {mat.name}");
             }
             else
             {
-                Debug.LogWarning($"GPU Instancing für Material {mat.name} ist bereits aktiviert");
+                Debug.LogWarning($"GPU instancing already enabled for material {mat.name}");
             }
         }
 

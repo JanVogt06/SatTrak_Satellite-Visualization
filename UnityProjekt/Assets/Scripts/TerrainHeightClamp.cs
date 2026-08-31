@@ -5,16 +5,16 @@ using Unity.Mathematics;
 
 public class TerrainHeightClamp : MonoBehaviour
 {
-    [Tooltip("Der GlobeAnchor an eurer Kamera")]
+    [Tooltip("Globe anchor attached to the camera")]
     public CesiumGlobeAnchor globeAnchor;
 
-    [Tooltip("Das Tileset, von dem wir die Höhe abfragen")]
+    [Tooltip("Tileset the height is sampled from")]
     public Cesium3DTileset tileset;
 
-    [Tooltip("Minimale Höhe über dem Gelände (m)")]
+    [Tooltip("Minimum height above terrain in meters")]
     public float minAboveGround = 5f;
 
-    [Tooltip("Abtastrate in Hz")]
+    [Tooltip("Sample rate in Hz")]
     public float sampleRateHz = 10f;
 
     void Start()

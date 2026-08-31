@@ -5,15 +5,15 @@ namespace Satellites
 {
     public class SatelliteModelController : MonoBehaviour
     {
-        [Header("Referenzen")]
+        [Header("References")]
         public CesiumZoomController zoomController;
 
-        [Header("Einstellungen")]
-        [Tooltip("FOV-Schwellenwert zum Umschalten zwischen den Modi")]
+        [Header("Settings")]
+        [Tooltip("FOV threshold for switching modes")]
         public float fovThreshold = 70f;
 
         [Header("Space Mode")]
-        [Tooltip("Größe der Kugel im Space-Modus")]
+        [Tooltip("Sphere size in space mode")]
         public float sphereSize = 20000f;
 
         private GameObject _modelInstance;

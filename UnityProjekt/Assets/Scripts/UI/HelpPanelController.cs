@@ -3,7 +3,7 @@ using UnityEngine.UI;
 
 public class HelpPanelController : MonoBehaviour
 {
-    [Header("UI-Referenzen")]
+    [Header("UI References")]
     [SerializeField] private GameObject helpPanel;
     [SerializeField] private CanvasGroup canvasGroup;
     [SerializeField] private GameObject backButton;

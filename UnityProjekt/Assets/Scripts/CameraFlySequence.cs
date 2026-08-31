@@ -4,16 +4,16 @@ using UnityEngine;
 [RequireComponent(typeof(Camera))]
 public sealed class CameraFlySequence : MonoBehaviour
 {
-    [Header("Ziel-Transform (X/Y-Position + Rotation)")]
+    [Header("Target transform (X/Y position and rotation)")]
     public Transform uiAnchor;
 
-    [Header("Fester Z-Wert für Nahansicht")]
+    [Header("Fixed Z value for the close-up view")]
     public float fixedTargetZ = -987f;
 
-    [Header("Fahrtdauer hin- und zurück (s)")]
+    [Header("Travel duration per direction in seconds")]
     public float travelTime = 2.5f;
 
-    [Header("Glättung (0 = linear, 2–5 = weich)")]
+    [Header("Smoothing (0 = linear, 2-5 = soft)")]
     [Range(0f, 5f)]
     public float smoothness = 2f;
 

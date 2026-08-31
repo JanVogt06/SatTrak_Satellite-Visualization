@@ -52,7 +52,7 @@ public class MusicManager : MonoBehaviour
             audioSource = GetComponent<AudioSource>();
             if (audioSource == null)
             {
-                Debug.LogError("MusicManager: AudioSource konnte nicht wiederhergestellt werden!");
+                Debug.LogError("MusicManager: AudioSource could not be restored");
                 return;
             }
 
@@ -113,7 +113,7 @@ public class MusicManager : MonoBehaviour
     {
         if (audioSource == null)
         {
-            Debug.LogWarning("AudioSource ist null – MusicManager wurde vermutlich zerstört.");
+            Debug.LogWarning("AudioSource is null, MusicManager was probably destroyed");
             return;
         }
 

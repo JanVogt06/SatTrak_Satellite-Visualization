@@ -16,7 +16,7 @@ public class ISSQuickButton : MonoBehaviour
     {
         if (issButton == null || searchPanelController == null)
         {
-            Debug.LogError("ISS Button oder SearchPanelController nicht zugewiesen!");
+            Debug.LogError("ISS button or SearchPanelController not assigned");
             return;
         }
 
@@ -29,18 +29,18 @@ public class ISSQuickButton : MonoBehaviour
         yield return new WaitForSeconds(2f);
 
         var satellites = SatelliteManager.Instance.GetAllSatellites();
-        Debug.Log($"Gefundene Satelliten: {satellites.Count}");
+        Debug.Log($"Satellites found: {satellites.Count}");
 
         issSatellite = satellites.FirstOrDefault(s => s.IsISS);
 
         if (issSatellite != null)
         {
-            Debug.Log($"ISS gefunden: {issSatellite.name}");
+            Debug.Log($"ISS found: {issSatellite.name}");
             issButton.onClick.AddListener(OnISSButtonClick);
         }
         else
         {
-            Debug.LogWarning("ISS nicht gefunden! Suche nach Namen...");
+            Debug.LogWarning("ISS not found, searching by name");
 
             var possibleISS = satellites.Where(s =>
                 s.name.Contains("25544") ||
@@ -50,7 +50,7 @@ public class ISSQuickButton : MonoBehaviour
 
             foreach(var sat in possibleISS)
             {
-                Debug.Log($"Mögliche ISS gefunden: {sat.name}");
+                Debug.Log($"Possible ISS found: {sat.name}");
             }
         }
     }

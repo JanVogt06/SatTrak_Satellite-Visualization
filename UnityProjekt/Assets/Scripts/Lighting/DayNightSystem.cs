@@ -6,34 +6,34 @@ using UnityEngine.UI;
 public class DayNightSystem : MonoBehaviour
 {
     [Header("References")]
-    [Tooltip("Das Directional Light, das als Sonne fungiert")]
+    [Tooltip("Directional light acting as the sun")]
     public Light sunLight;
 
-    [Tooltip("Referenz zum TimeSlider für die aktuelle Zeit")]
+    [Tooltip("TimeSlider providing the current time")]
     public TimeSlider.TimeSlider timeSlider;
 
-    [Tooltip("Optional: Material der Erde für Shader-Effekte")]
+    [Tooltip("Optional earth material for shader effects")]
     public Material earthMaterial;
 
     [Header("Sun Settings")]
-    [Tooltip("Intensität des Sonnenlichts")]
+    [Tooltip("Sunlight intensity")]
     public float sunIntensity = 1.3f;
 
-    [Tooltip("Farbe des Sonnenlichts")]
+    [Tooltip("Sunlight color")]
     public Color sunColor = new Color(1f, 0.95f, 0.8f);
 
     [Header("Ambient Settings")]
-    [Tooltip("Ambiente Beleuchtung bei Tag")]
+    [Tooltip("Ambient light during the day")]
     public Color dayAmbientColor = new Color(0.5f, 0.6f, 0.7f);
 
-    [Tooltip("Ambiente Beleuchtung bei Nacht")]
+    [Tooltip("Ambient light during the night")]
     public Color nightAmbientColor = new Color(0.05f, 0.05f, 0.1f);
 
     [Header("Visual Effects")]
-    [Tooltip("Zeigt einen visuellen Terminator (Tag/Nacht-Grenze)")]
+    [Tooltip("Show a visual terminator (day/night boundary)")]
     public bool showTerminator = true;
 
-    [Tooltip("GameObject für den Terminator-Effekt")]
+    [Tooltip("GameObject for the terminator effect")]
     public GameObject terminatorPlane;
 
     [Header("Debug")]
@@ -53,7 +53,7 @@ public class DayNightSystem : MonoBehaviour
 
         if (sunLight == null || timeSlider == null)
         {
-            Debug.LogError("DayNightSystem: Fehlende Referenzen!");
+            Debug.LogError("DayNightSystem: Fehlende References!");
             enabled = false;
             return;
         }
@@ -167,7 +167,7 @@ public class DayNightSystem : MonoBehaviour
         DateTime current = timeSlider.CurrentSimulatedTime;
         Debug.Log($"Zeit: {current:yyyy-MM-dd HH:mm:ss}");
         Debug.Log($"Sonnenrichtung: {sunDirection}");
-        Debug.Log($"Sonnenhöhe: {Vector3.Dot(sunDirection, Vector3.up):F2}");
+        Debug.Log($"Sun elevation: {Vector3.Dot(sunDirection, Vector3.up):F2}");
     }
 
     public float GetLocalSunElevation(double latitude, double longitude, DateTime time)

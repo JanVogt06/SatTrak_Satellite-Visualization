@@ -3,20 +3,20 @@ using UnityEngine.UI;
 
 public class CrosshairSelector : MonoBehaviour
 {
-    [Header("Crosshair Auswahl")]
+    [Header("Crosshair Selection")]
     public Button[] crosshairButtons;
     public Image[] crosshairImages;
 
-    [Header("Crosshair Farb-Auswahl")]
+    [Header("Crosshair Colors")]
     public Button[] colorButtons;
     public Color[] availableColors;
 
-    [Header("Cursor Auswahl")]
+    [Header("Cursor Selection")]
     public Button[] cursorButtons;
     public Image[] cursorPreviewImages;
     public Texture2D[] cursorTextures;
 
-    [Header("Cursor Farb-Auswahl")]
+    [Header("Cursor Colors")]
     public Button[] cursorColorButtons;
 
     public CustomCursor custCursor;

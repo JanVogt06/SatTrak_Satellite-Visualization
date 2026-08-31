@@ -38,7 +38,7 @@ public class SceneSwitcher : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("Kein Szenenname angegeben!");
+            Debug.LogWarning("No scene name given");
         }
     }
 
