@@ -25,5 +25,6 @@ fi
 
 mkdir -p "$(dirname "$TARGET")"
 mv "$tmp" "$TARGET"
+chmod 644 "$TARGET"
 trap - EXIT
 echo "wrote $TARGET with $((lines / 3)) element sets"
