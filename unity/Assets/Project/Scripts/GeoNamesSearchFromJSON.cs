@@ -9,6 +9,7 @@ using Geo;
 using System.Linq;
 using UnityEngine.EventSystems;
 using UnityEngine.Localization.Settings;
+using UnityEngine.Serialization;
 
 [Serializable]
 public class LocationEntry
@@ -16,21 +17,14 @@ public class LocationEntry
     public string name;
     public double lat;
     public double lon;
-
-    [NonSerialized] public string nameLower;
-}
-
-[Serializable]
-public class LocationDatabase
-{
-    public List<LocationEntry> entries;
 }
 
 public class GeoNamesSearchFromJSON : MonoBehaviour
 {
 
-    [Header("GeoNames JSON")]
-    public TextAsset geoJson;
+    [Header("City Database")]
+    [FormerlySerializedAs("geoJson")]
+    public TextAsset cityDatabase;
 
     [Header("UI References")]
     public GameObject panel;
@@ -83,23 +77,19 @@ public class GeoNamesSearchFromJSON : MonoBehaviour
     "London","Paris","Berlin","Madrid","Rome","Vienna","Warsaw","Prague","Budapest","Amsterdam",
     "Brussels","Athens","Stockholm","Copenhagen","Dublin","Lisbon","Oslo","Helsinki","Bucharest","Sofia",
     "Zagreb","Belgrade","Kyiv","Moscow","Jena",
-    "New York","Beijing","Tokyo","New Delhi","Cairo","Riyadh","Mexico City","Brasília",
+    "New York City","Beijing","Tokyo","New Delhi","Cairo","Riyadh","Mexico City","Brasília",
     "Buenos Aires","Ottawa","Canberra","Pretoria","Nairobi","Jakarta","Seoul","Bangkok"
 };
 
     private void Awake()
     {
-        var db = JsonUtility.FromJson<LocationDatabase>(geoJson.text);
-        _allLocations = db.entries;
+        _allLocations = CityDatabase.Read(cityDatabase.bytes);
 
         foreach (var e in _allLocations)
-        {
-            e.nameLower = e.name.ToLowerInvariant();
             _lookup[e.name] = e;
-        }
 
-        _nameAsc = _allLocations.OrderBy(l => l.nameLower).ToList();
-        _nameDesc = _nameAsc.AsEnumerable().Reverse().ToList();
+        _nameAsc = _allLocations;
+        _nameDesc = Enumerable.Reverse(_allLocations).ToList();
 
         _filtered = new List<LocationEntry>(_allLocations);
         _totalPages = Mathf.Max(1, Mathf.CeilToInt((float)_filtered.Count / itemsPerPage));
@@ -298,8 +288,9 @@ public class GeoNamesSearchFromJSON : MonoBehaviour
             filterDropdown.SetValueWithoutNotify(0);
         }
 
-        string q = query.ToLowerInvariant();
-        _filtered = _allLocations.Where(l => l.nameLower.Contains(q)).ToList();
+        _filtered = _allLocations
+            .Where(l => l.name.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
+            .ToList();
 
         _totalPages = Mathf.Max(1, Mathf.CeilToInt((float)_filtered.Count / itemsPerPage));
         UpdateFoundLabel();

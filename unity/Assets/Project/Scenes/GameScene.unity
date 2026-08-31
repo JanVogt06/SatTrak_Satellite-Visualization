@@ -4250,7 +4250,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 19f39fc16820d0b4094cb44b2815eafb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  geoJson: {fileID: 4900000, guid: 47ee9ee23c3469f4ead127ac7432f4eb, type: 3}
+  cityDatabase: {fileID: 4900000, guid: fb9044fb2717642cfbad22991b269ec2, type: 3}
   panel: {fileID: 2059022686}
   openButton: {fileID: 1819131346}
   contentParent: {fileID: 416695753}
@@ -4266,6 +4266,7 @@ MonoBehaviour:
   zoomController: {fileID: 1952269538}
   georeference: {fileID: 1786786860}
   itemsPerPage: 20
+  earthViewAltitude: 250000
   foundPlacesText: {fileID: 1310393167}
 --- !u!114 &308697202
 MonoBehaviour:
@@ -15404,6 +15405,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2323664ff93dbb42bc34186f120737a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  liveTleUrl: tle/active.txt
+  tleSnapshotFile: tle/active.txt
   satellitePrefab: {fileID: 1888826446}
   georeference: {fileID: 1786786860}
   satelliteParent: {fileID: 1901460567}
