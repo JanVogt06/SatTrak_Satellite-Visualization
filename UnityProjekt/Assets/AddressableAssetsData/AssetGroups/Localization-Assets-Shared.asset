@@ -18,12 +18,12 @@ MonoBehaviour:
   m_GUID: 9312559ad6b64cb46a0fd5e3b1a9da1f
   m_SerializeEntries:
   - m_GUID: 1d5df2588507b0a429b4b7138932f2b0
-    m_Address: Assets/Localisation/Tables/GameScene Shared Data.asset
+    m_Address: Assets/Project/Localization/Tables/GameScene Shared Data.asset
     m_ReadOnly: 1
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 86401d85eb9db494087bf2a4f2d98938
-    m_Address: Assets/Localisation/Tables/MainMenuTable Shared Data.asset
+    m_Address: Assets/Project/Localization/Tables/MainMenuTable Shared Data.asset
     m_ReadOnly: 1
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
