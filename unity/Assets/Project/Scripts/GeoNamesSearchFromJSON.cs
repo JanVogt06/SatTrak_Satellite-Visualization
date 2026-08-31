@@ -52,6 +52,9 @@ public class GeoNamesSearchFromJSON : MonoBehaviour
     [Header("Settings")]
     public int itemsPerPage = 20;
 
+    [Tooltip("Camera altitude in meters when flying to a city")]
+    public double earthViewAltitude = 250000;
+
     private readonly Dictionary<string, LocationEntry> _lookup = new();
 
     private int _currentPage = 0;
@@ -268,7 +271,7 @@ public class GeoNamesSearchFromJSON : MonoBehaviour
             georeference.latitude = entry.lat;
             georeference.longitude = entry.lon;
             georeference.height = 400;
-            zoomController.ZoomToEarth(new double3(entry.lon, entry.lat, 1000));
+            zoomController.ZoomToEarth(new double3(entry.lon, entry.lat, earthViewAltitude));
             yield break;
         }
 
@@ -278,7 +281,7 @@ public class GeoNamesSearchFromJSON : MonoBehaviour
         georeference.latitude = entry.lat;
         georeference.longitude = entry.lon;
         georeference.height = 400;
-        zoomController.ZoomToEarth(new double3(entry.lon, entry.lat, 1000));
+        zoomController.ZoomToEarth(new double3(entry.lon, entry.lat, earthViewAltitude));
     }
 
     private void OnSearchChanged(string query)
