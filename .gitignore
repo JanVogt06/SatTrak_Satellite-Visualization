@@ -20,6 +20,9 @@ unity/[Aa]ssets/AddressableAssetsData/link.xml*
 unity/[Aa]ssets/Addressables_Temp*
 unity/[Aa]ssets/AddressableAssetsData/*/*.bin*
 
+# Burst output from the WebGL build
+unity/Data/
+
 # Visual scripting generated
 unity/[Aa]ssets/Unity.VisualScripting.Generated/
 
