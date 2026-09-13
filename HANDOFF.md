@@ -15,10 +15,10 @@ The goal is to publish it as a WebGL build served from a container, installable 
 | --- | --- |
 | Unity | 6000.6.0f1 |
 | Runs in the editor | yes, no account or API key needed |
-| WebGL build | works, 140 MB, about 19 minutes locally on a cold library |
+| WebGL build | works, 134 MB on disk, 66 MB first load, about 6 minutes on a warm library |
 | Container | built and tested locally, all headers verified |
 | Release | `v0.1.0` tagged, pipeline runs on `v*` tags |
-| Open blocker | Unity Localization uses synchronous Addressables, which WebGL rejects |
+| Open blocker | Localization is dead on WebGL and the main menu has no labels at all |
 
 Cesium is gone, the TLE path no longer uses APIs WebGL lacks, and the asset budget has been
 cut far enough that the build loads in a browser. It has been verified end to end: the image
@@ -223,23 +223,45 @@ smaller, and the picture did not change — **the engine was never the problem.*
 The application is ten megabytes. The rest is background music and one model. Two changes
 would take the first load to roughly 20-30 MB, and neither needs a new engine:
 
-**Take the music out of the build.** The import settings are already right — streaming,
-Vorbis, quality 0.35, `preloadAudioData: 0` — but that does not apply on the web, where Unity
-hands audio to the Web Audio API and the clip data sits in `.data` regardless. `MusicManager`
-holds a `List<AudioClip>` in the inspector, so the scene references all eight and all eight
-ship. Serve them as loose `.ogg` from `StreamingAssets/music/` and load with
-`UnityWebRequestMultimedia.GetAudioClip` — the same pattern the TLE path already uses, and
-nginx is already configured for that kind of file.
+**The music is out of the build — done.** The import settings had always been right
+(streaming, Vorbis, quality 0.35, `preloadAudioData: 0`) but none of that applies on the web,
+where Unity hands audio to the Web Audio API and the clip data sits in `.data` regardless.
+`MusicManager` held a `List<AudioClip>` in the inspector, so the scene referenced all eight
+and all eight shipped.
 
-**Load the ISS model on demand.** Its textures are not the issue: all 26 are 512x512 and
-total 9.2 MB of the glb. The other ~12 MB is geometry, which `tools/shrink-model-textures.py`
-cannot touch by design. Load the glb at runtime through glTFast when the camera approaches
-the ISS instead of shipping it in every first load.
+The tracks now live in `unity/Assets/StreamingAssets/music/` and load through
+`UnityWebRequestMultimedia.GetAudioClip`, the same pattern the TLE path uses. File names are
+inspector fields on `MusicManager`, not constants. `SatTrak.data.br` fell from **129 MB to
+57 MB**; the first load is now about 66 MB and one ~9 MB track streams in behind it. nginx
+serves `/StreamingAssets/music/` with a one year immutable cache.
+
+The 320 kbps originals were 179 MB and now live in `art-source/audio/`, outside `Assets/`,
+matching what `art-source/models/` does. What ships is VBR ~130 kbps, 70 MB for all eight —
+that is the same bitrate the Vorbis q0.35 import was already producing, so nothing audible
+changed. Re-encode from the originals if that judgement needs revisiting.
+
+Verified by serving the build locally with brotli headers and watching the request log:
+`GET /StreamingAssets/music/Quiet%20Wormhole.mp3` returned 200 and the audio context
+resumed.
+
+**Load the ISS model on demand — still open, and now the largest single item.** Of the 57 MB
+that remain, roughly 49 MB is `ISS_stationary.glb`. Its textures are not the issue: all 26
+are 512x512 and total 9.2 MB of the glb. The other ~12 MB is geometry, which
+`tools/shrink-model-textures.py` cannot touch by design. Load the glb at runtime through
+glTFast when the camera approaches the ISS instead of shipping it in every first load. That
+should take the first load to roughly 20 MB.
 
 ## Open items and known issues
 
-**Localization is broken on WebGL.** This is the one real blocker left. The browser console
-shows:
+**Localization is broken on WebGL, and it is worse than it used to read here.** This is the
+one real blocker left, and it was reproduced against a Unity 6.6 build served locally: the
+four main menu buttons render as **empty outlines with no text at all**. The earlier note in
+this file claimed the English fallback still filled them in. It does not.
+
+The mechanism: `MenuManager.Awake` calls `ApplyLocale`, which touches
+`LocalizationSettings.AvailableLocales`. That throws, the exception leaves `Awake`, and every
+line after it — both dropdown fills and the button labels — never runs. So this is not a
+cosmetic fallback problem, it is an unusable menu. The browser console shows:
 
 ```
 Exception: WebGLPlayer does not support synchronous Addressable loading.
@@ -249,9 +271,10 @@ Locales PreloadOperation has not been initialized, can not return the available 
 
 Unity's Localization package resolves locales synchronously through Addressables, which
 WebGL does not support. Menu text still appears through the English fallback, so it is not
-immediately obvious, but language switching is very likely dead. The fix is to await
-`LocalizationSettings.InitializationOperation` before anything touches locales, rather than
-letting the package block.
+The fix is to await `LocalizationSettings.InitializationOperation` before anything touches
+locales, rather than letting the package block. Upgrading the package did not help: this was
+captured under Localization 1.5.12 on Unity 6000.6.0f1, and the exception is word for word
+the one 1.5.5 produced.
 
 **Two inspector values still need tuning.** `ViewModeController.nearEarth` is 1 m, which
 causes z-fighting now that the city fly-to ends at 250 km, and `FreeFlyCamera` movement speed
