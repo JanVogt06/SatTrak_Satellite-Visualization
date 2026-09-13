@@ -26,7 +26,7 @@ public class TOCButton : MonoBehaviour
         le.preferredWidth = w;
         le.flexibleWidth  = 0;
 
-        label.enableWordWrapping = false;
+        label.textWrappingMode = TextWrappingModes.NoWrap;
 
         GetComponent<Button>().onClick.AddListener(ScrollToSection);
     }
