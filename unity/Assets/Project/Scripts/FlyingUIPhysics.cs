@@ -25,14 +25,14 @@ public sealed class FlyingUIPhysics : MonoBehaviour
 
         float v = Random.Range(speedRange.x, speedRange.y);
         float phi = Random.Range(0f, 2f * Mathf.PI);
-        rb.velocity = new Vector2(Mathf.Cos(phi), Mathf.Sin(phi)) * v;
+        rb.linearVelocity = new Vector2(Mathf.Cos(phi), Mathf.Sin(phi)) * v;
     }
 
     private void OnCollisionEnter2D(Collision2D col)
     {
 
         float theta = Random.Range(-randomAngle, randomAngle) * Mathf.Deg2Rad;
-        rb.velocity = Quaternion.Euler(0, 0, theta * Mathf.Rad2Deg) * rb.velocity;
+        rb.linearVelocity = Quaternion.Euler(0, 0, theta * Mathf.Rad2Deg) * rb.linearVelocity;
 
         if (palette.Length == 0) return;
         Color c = palette[Random.Range(0, palette.Length)];
