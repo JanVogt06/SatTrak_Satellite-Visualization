@@ -7104,15 +7104,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 09c69f5dde47f9a47a372d205ec472e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  musicClips:
-  - {fileID: 8300000, guid: 4bb9b6ad838f4b34c94ee6d7cd217370, type: 3}
-  - {fileID: 8300000, guid: d766688662e262f4e89d14f7dfe7998c, type: 3}
-  - {fileID: 8300000, guid: 18eef21ed1bd0954aab286467fd591cb, type: 3}
-  - {fileID: 8300000, guid: d704ef5bee0f9644b8fb6b26a066f773, type: 3}
-  - {fileID: 8300000, guid: 9ef98740d0eba4443a5608e6f4747a89, type: 3}
-  - {fileID: 8300000, guid: 5322b290d03590f4c89a34497d79250f, type: 3}
-  - {fileID: 8300000, guid: 4df133a7ec2ff5244aa13384cff688b9, type: 3}
-  - {fileID: 8300000, guid: f35d8ce7168ec64488684eb7ba586991, type: 3}
+  musicFolder: music
+  musicFiles:
+  - Alien World.mp3
+  - Deep into the Space.mp3
+  - Deep Space Journey.mp3
+  - Dreams About Andromeda.mp3
+  - Homeworld.mp3
+  - Quiet Wormhole.mp3
+  - Space Adrift.mp3
+  - Space Piano.mp3
   audioSource: {fileID: 724164729}
   volume: 1
   isMuted: 0

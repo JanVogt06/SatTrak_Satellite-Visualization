@@ -1,11 +1,18 @@
-using System.Collections.Generic;
+using System.Collections;
+using System.IO;
 using UnityEngine;
+using UnityEngine.Networking;
 
 public class MusicManager : MonoBehaviour
 {
     public static MusicManager Instance;
 
-    public List<AudioClip> musicClips;
+    [Tooltip("Folder below StreamingAssets holding the tracks")]
+    public string musicFolder = "music";
+
+    [Tooltip("Track file names inside that folder")]
+    public string[] musicFiles;
+
     public AudioSource audioSource;
 
     [HideInInspector] public float volume = 1f;
@@ -15,6 +22,7 @@ public class MusicManager : MonoBehaviour
     private const string MuteKey = "MusicMuted";
 
     private float savedVolumeBeforeMute = 0.5f;
+    private bool isLoading;
 
     void Awake()
     {
@@ -61,7 +69,7 @@ public class MusicManager : MonoBehaviour
             ApplyVolume();
         }
 
-        if (!audioSource.isPlaying && musicClips.Count > 0)
+        if (!audioSource.isPlaying && !isLoading && musicFiles.Length > 0)
         {
             PlayRandomTrack();
         }
@@ -122,10 +130,41 @@ public class MusicManager : MonoBehaviour
 
     public void PlayRandomTrack()
     {
-        if (musicClips.Count == 0) return;
+        if (musicFiles.Length == 0 || isLoading) return;
 
-        int index = Random.Range(0, musicClips.Count);
-        audioSource.clip = musicClips[index];
+        StartCoroutine(LoadAndPlay(musicFiles[Random.Range(0, musicFiles.Length)]));
+    }
+
+    private IEnumerator LoadAndPlay(string fileName)
+    {
+        isLoading = true;
+
+        string url = Path.Combine(Application.streamingAssetsPath, musicFolder, fileName);
+        if (!url.Contains("://"))
+            url = "file://" + url;
+
+        using UnityWebRequest request = UnityWebRequestMultimedia.GetAudioClip(url, AudioType.MPEG);
+        yield return request.SendWebRequest();
+
+        if (request.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogError($"MusicManager: could not load {fileName}: {request.error}");
+            isLoading = false;
+            yield break;
+        }
+
+        AudioClip clip = DownloadHandlerAudioClip.GetContent(request);
+        if (clip == null)
+        {
+            Debug.LogError($"MusicManager: {fileName} did not decode into a clip");
+            isLoading = false;
+            yield break;
+        }
+
+        clip.name = fileName;
+        audioSource.clip = clip;
         audioSource.Play();
+
+        isLoading = false;
     }
 }
