@@ -10,7 +10,7 @@ Shader "Custom/EarthDayNightOverlayTransparent"
 
     SubShader
     {
-        Tags { "Queue"="Transparent" "RenderType"="Transparent" }
+        Tags { "RenderPipeline"="UniversalPipeline" "Queue"="Transparent" "RenderType"="Transparent" }
         LOD 100
 
         Pass
@@ -19,15 +19,17 @@ Shader "Custom/EarthDayNightOverlayTransparent"
             ZWrite Off
             Cull Off
 
-            CGPROGRAM
+            HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #include "UnityCG.cginc"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-            fixed4 _DayColor;
-            fixed4 _NightColor;
+            CBUFFER_START(UnityPerMaterial)
+            half4 _DayColor;
+            half4 _NightColor;
             float _TerminatorSoftness;
             float4 _SunDirection;
+            CBUFFER_END
 
             struct appdata
             {
@@ -44,12 +46,12 @@ Shader "Custom/EarthDayNightOverlayTransparent"
             v2f vert (appdata v)
             {
                 v2f o;
-                o.pos = UnityObjectToClipPos(v.vertex);
-                o.worldNormal = UnityObjectToWorldNormal(v.normal);
+                o.pos = TransformObjectToHClip(v.vertex.xyz);
+                o.worldNormal = TransformObjectToWorldNormal(v.normal);
                 return o;
             }
 
-            fixed4 frag (v2f i) : SV_Target
+            half4 frag (v2f i) : SV_Target
             {
                 float3 normal = normalize(i.worldNormal);
                 float3 sunDir = normalize(_SunDirection.xyz);
@@ -57,14 +59,14 @@ Shader "Custom/EarthDayNightOverlayTransparent"
 
                 float dayAmount = smoothstep(0.0, _TerminatorSoftness, NdotL);
 
-                fixed4 day = _DayColor;
-                fixed4 night = _NightColor;
-                fixed alpha = lerp(night.a, day.a, dayAmount);
-                fixed3 color = lerp(night.rgb, day.rgb, dayAmount);
+                half4 day = _DayColor;
+                half4 night = _NightColor;
+                half alpha = lerp(night.a, day.a, dayAmount);
+                half3 color = lerp(night.rgb, day.rgb, dayAmount);
 
-                return fixed4(color, alpha);
+                return half4(color, alpha);
             }
-            ENDCG
+            ENDHLSL
         }
     }
 }
