@@ -45,7 +45,7 @@ jobs:
         with:
           projectPath: unity
           targetPlatform: WebGL
-          unityVersion: 2022.3.62f3
+          unityVersion: 6000.6.0f1
           buildMethod: BuildWebGL.Run
           allowDirtyBuild: true
 
