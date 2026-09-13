@@ -38,7 +38,7 @@ three line TLE format, and the runtime does the same check before accepting a re
 
 ## Requirements
 
-- Unity 2022.3.62f3
+- Unity 6000.6.0f1
 - Git LFS
 
 ## Setup

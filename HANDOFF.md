@@ -13,9 +13,9 @@ The goal is to publish it as a WebGL build served from a container, installable 
 
 | | |
 | --- | --- |
-| Unity | 2022.3.62f3 |
+| Unity | 6000.6.0f1 |
 | Runs in the editor | yes, no account or API key needed |
-| WebGL build | works, 148 MB, about 6 minutes locally |
+| WebGL build | works, 140 MB, about 19 minutes locally on a cold library |
 | Container | built and tested locally, all headers verified |
 | Release | `v0.1.0` tagged, pipeline runs on `v*` tags |
 | Open blocker | Unity Localization uses synchronous Addressables, which WebGL rejects |
@@ -78,6 +78,34 @@ agreement to 0.0000 mm, determinant −1.000, and the earth centre lands at
 
 **Shipping.** The asset budget was cut, the container and the release pipeline were built and
 `v0.1.0` was tagged. See the two sections after that.
+
+**Unity 6.** The project moved from 2022.3.62f3 to 6000.6.0f1. It cost far less than the
+`unity6-upgrade` branch suggested: exactly one compile error in the whole project
+(`TMP_Text.enableWordWrapping`, now `textWrappingMode`) and one file the API updater fixed by
+itself (`Rigidbody2D.velocity`, now `linearVelocity`). URP went 14.0.12 to 17.6.0 without a
+single shader or material breaking, because the project has no renderer features, no shader
+graphs and six materials.
+
+The risk worth recording is the one that did *not* fire. `com.atteneder.gltfast` was pinned
+to nothing — a bare git URL resolving to whatever `HEAD` was — and had to become
+`com.unity.cloud.gltfast`, which reimports all 25 `.glb` files. Scenes reference those models
+as `{fileID, guid}`, and the `.glb.meta` files carry an empty `internalIDToNameTable`, so the
+ids are generated at import rather than pinned. Had the new importer numbered them
+differently, every model reference in both scenes would have broken silently. Capture the
+mapping before such a change and diff it afterwards:
+
+```bash
+grep -oE "fileID: -?[0-9]+, guid: \w+" unity/Assets/Project/Scenes/*.unity
+```
+
+All 25 came back identical — glTFast derives the id from the node name, and the Unity fork
+kept that scheme. Scenes and prefabs were not touched at all; of 590 changed files, 572 were
+`.meta` files getting importer format bumps.
+
+`EarthDayNightOverlay.shader` was ported from `CGPROGRAM`/`UnityCG.cginc` to URP HLSL. It
+still compiled under the old syntax, but that path is legacy under an SRP and the shader had
+no `CBUFFER`, so it was not SRP Batcher compatible either. The translation is line for line;
+**the terminator still deserves one visual check**, which a headless build cannot give.
 
 ## How TLE data reaches the app
 
@@ -151,9 +179,10 @@ Running the workflow manually from the Actions tab builds without publishing and
 the result as an artifact — use that to check a change before tagging. The first run takes
 one to three hours because the Unity library cache is cold; later runs reuse it.
 
-CI needs `UNITY_EMAIL`, `UNITY_PASSWORD` and `UNITY_LICENSE`. A `.ulf` produced by a Unity 6
-Hub activates 2022.3.62f3 without complaint — that was verified, the licence file version
-does not have to match the editor.
+CI needs `UNITY_EMAIL`, `UNITY_PASSWORD` and `UNITY_LICENSE`. GameCI publishes
+`unityci/editor:ubuntu-6000.6.0f1-webgl-3`, so the image side of the upgrade is covered. The
+licence has only ever been exercised against 2022.3 in CI; the first tagged Unity 6 build is
+where that gets proven.
 
 ## What the asset budget looks like
 
@@ -178,6 +207,34 @@ files keep their names, meta files and GUIDs, so no scene reference breaks.
 
 Largest remaining assets: `ISS_stationary.glb` at 48.8 MB (26 textures, none oversized on
 its own), then the audio tracks at roughly 10 MB each.
+
+Under Unity 6 the same build is 140 MB: `SatTrak.data.br` fell from 138 MB to 129 MB while
+`SatTrak.wasm.br` grew from 7.4 MB to 8.8 MB. The engine got bigger, the assets got slightly
+smaller, and the picture did not change — **the engine was never the problem.**
+
+### Where the 129 MB actually are
+
+| | Share of the build |
+| --- | --- |
+| 8 music tracks | ~80 MB |
+| `ISS_stationary.glb` | ~49 MB |
+| everything else — engine, scenes, globe, 24 satellite models, UI, help | ~10 MB |
+
+The application is ten megabytes. The rest is background music and one model. Two changes
+would take the first load to roughly 20-30 MB, and neither needs a new engine:
+
+**Take the music out of the build.** The import settings are already right — streaming,
+Vorbis, quality 0.35, `preloadAudioData: 0` — but that does not apply on the web, where Unity
+hands audio to the Web Audio API and the clip data sits in `.data` regardless. `MusicManager`
+holds a `List<AudioClip>` in the inspector, so the scene references all eight and all eight
+ship. Serve them as loose `.ogg` from `StreamingAssets/music/` and load with
+`UnityWebRequestMultimedia.GetAudioClip` — the same pattern the TLE path already uses, and
+nginx is already configured for that kind of file.
+
+**Load the ISS model on demand.** Its textures are not the issue: all 26 are 512x512 and
+total 9.2 MB of the glb. The other ~12 MB is geometry, which `tools/shrink-model-textures.py`
+cannot touch by design. Load the glb at runtime through glTFast when the camera approaches
+the ISS instead of shipping it in every first load.
 
 ## Open items and known issues
 
@@ -209,13 +266,32 @@ covered 0.38 texels, which is why `GeoNamesSearchFromJSON.earthViewAltitude` def
 **Globe tessellation** is 256x128 segments, so one segment spans 156 km at the equator. Fine
 from orbit; the horizon reads as a straight edge up close. Adjustable on `EarthGlobe`.
 
-**Unity 6** was considered and deliberately postponed. Its WebGL backend is better and the
-memory budget would benefit, but it is a URP 14 to 17 jump that would need everything
-reverified. Note the existing `unity6-upgrade` branch is useless: it forks from before this
-work and reinstates Cesium. Starting fresh from `main` is the only sensible path.
+**Cesium for Unity can reach the web now**, which is why the Unity 6 upgrade was worth doing.
+As of Cesium for Unity v1.20.0 (March 2026) the plugin builds for the web on Unity 6 or
+later, over WebGL as well as WebGPU, and streams 3D Tiles terrain. That is the one thing the
+hand-written globe cannot do. `Georeference` was deliberately written as a drop-in for
+`CesiumGeoreference`, so the swap does not disturb `Wgs84`, `GlobeAnchor` or any satellite
+code.
+
+Three conditions come with it, and none are free. It is experimental by Cesium's own label.
+It requires Native C/C++ Multithreading, which means the server must send
+`Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Embedder-Policy: require-corp` and
+`Cross-Origin-Resource-Policy: cross-origin` — and cross-origin isolation needs a secure
+context, so `http://localhost:8003` works but a plain-HTTP LAN address does not. That would
+weaken the `docker compose pull` promise for anyone without a TLS proxy. And the Cesium ion
+token returns, which for a publicly pulled container means every visitor streams against one
+account's quota. That last point is unrelated to Unity — CesiumJS would raise it too — but it
+has to be answered before terrain is worth starting.
 
 **One missing lighting settings asset** in `GameScene` (GUID
 `8bdf27f6e3fbb4f2f9f891fbf3dbf399`). It predates all of this work.
+
+**Two runtime `Shader.Find` calls look wrong**, both older than the Unity 6 work.
+`SatelliteModelController.cs:187` asks for `"Standard"`, which is a built-in pipeline shader
+and renders magenta under URP. And `Shader.Find` at runtime only succeeds if the shader
+reached the build at all — with nothing referencing it from a scene, that is a WebGL-only
+failure that does not show up in the editor. Worth checking against a running build rather
+than assuming either way.
 
 **The README screenshot** still shows the Cesium globe and is out of date.
 
@@ -231,11 +307,13 @@ into "keep the previous data" rather than breaking, but do not poll it.
 - Anything that belongs in the inspector stays in the inspector. Do not set values at
   runtime that could have been serialized — that is why the fly-to altitude and the TLE URLs
   became fields rather than constants.
-- Verify Unity changes headlessly before committing:
+- Verify Unity changes headlessly before committing. `-accept-apiupdate` matters: without it
+  the API updater does not run in batch mode and you get compile errors that are not real.
 
   ```bash
-  /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/MacOS/Unity \
-    -batchmode -quit -nographics -projectPath unity -logFile /tmp/unity.log
+  /Applications/Unity/Hub/Editor/6000.6.0f1/Unity.app/Contents/MacOS/Unity \
+    -batchmode -quit -nographics -accept-apiupdate -buildTarget WebGL \
+    -projectPath unity -logFile /tmp/unity.log
   ```
 
   Exit code 0 and no `error CS` lines in the log.
