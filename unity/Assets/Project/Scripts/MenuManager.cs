@@ -101,21 +101,22 @@ public class MenuManager : MonoBehaviour
     {
         var opts = new List<TMP_Dropdown.OptionData>();
 
-        foreach (string key in new[] { englishKey, germanKey })
+        foreach (Locale locale in LocalizationSettings.AvailableLocales.Locales)
         {
+            string code = locale.Identifier.Code;
+            string key = code.StartsWith("de") ? germanKey : englishKey;
+
             var op = LocalizationSettings.StringDatabase.GetLocalizedStringAsync(tableName, key);
             yield return op;
 
             string label = op.Status == AsyncOperationStatus.Succeeded ? op.Result : null;
-            opts.Add(new TMP_Dropdown.OptionData(string.IsNullOrEmpty(label) ? key : label));
+            opts.Add(new TMP_Dropdown.OptionData(string.IsNullOrEmpty(label) ? code : label));
         }
 
         languageDropdown.options = opts;
         languageDropdown.RefreshShownValue();
 
-        int current = LocalizationSettings.AvailableLocales.Locales
-                       .IndexOf(LocalizationSettings.SelectedLocale);
-        languageDropdown.SetValueWithoutNotify(current);
+        languageDropdown.SetValueWithoutNotify(PlayerPrefs.GetInt(LocalePrefKey, 0));
     }
 
     void InitializeLanguageDropdown()
