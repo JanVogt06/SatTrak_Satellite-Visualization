@@ -62,7 +62,13 @@ public class MenuManager : MonoBehaviour
 
     private IEnumerator ApplySavedLocale()
     {
-        yield return LocalizationSettings.InitializationOperation;
+        float deadline = Time.realtimeSinceStartup + 15f;
+
+        if (LocalizationSettings.AvailableLocales is IPreloadRequired provider)
+        {
+            while (!provider.PreloadOperation.IsDone && Time.realtimeSinceStartup < deadline)
+                yield return null;
+        }
 
         ApplyLocale(PlayerPrefs.GetInt(LocalePrefKey, 0));
 
