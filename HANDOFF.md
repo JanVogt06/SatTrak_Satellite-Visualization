@@ -16,13 +16,20 @@ The goal is to publish it as a WebGL build served from a container, installable 
 | Unity | 6000.6.0f1 |
 | Runs in the editor | yes, no account or API key needed |
 | WebGL build | works, 134 MB on disk, 66 MB first load, about 6 minutes on a warm library |
-| Container | built and tested locally, all headers verified |
-| Release | `v0.1.0` tagged, pipeline runs on `v*` tags |
+| Container | built and verified before Unity 6; the music cache rule added since is untested |
+| Release | `v0.3.0` tagged, pipeline runs on `v*` tags |
 | Open blocker | none — the menu, the localization and the language switch all work in the browser |
 
 Cesium is gone, the TLE path no longer uses APIs WebGL lacks, and the asset budget has been
-cut far enough that the build loads in a browser. It has been verified end to end: the image
-serves the build, the player starts, the main menu responds and the game scene loads.
+cut far enough that the build loads quickly in a browser.
+
+What has been verified, and how, matters here. The current build was driven by hand in a
+browser against a local static server with brotli headers: the menu renders, the language
+switch works, the music streams, the game scene loads with the globe and its satellites. The
+**container** has not been rebuilt since the Unity 6 upgrade — the last end to end run through
+nginx was on `v0.1.0`, and `docker/default.conf` has gained a `/StreamingAssets/music/` cache
+rule since that nobody has exercised. That is the first thing to check before trusting a
+release.
 
 ## Getting it running
 
@@ -40,7 +47,7 @@ Add `unity/` as a project in Unity Hub. There is no token or config file to fill
 
 ## What changed
 
-54 commits, in four blocks.
+83 commits, in six blocks.
 
 **Cleanup.** The repository was restructured: `unity/Assets/Project` holds everything
 written for this project, `unity/Assets/ThirdParty` holds vendored assets. Dead code and
@@ -107,6 +114,14 @@ still compiled under the old syntax, but that path is legacy under an SRP and th
 no `CBUFFER`, so it was not SRP Batcher compatible either. The translation is line for line;
 **the terminator still deserves one visual check**, which a headless build cannot give.
 
+**Making it work in a browser.** The music left the build and now streams from
+`StreamingAssets`, which halved the first load. Then the reason nobody had noticed how broken
+the web build was: no text rendered at all, in either scene. That turned out to be the TMP
+shader, not localization — and behind it a second fault, two Addressables operations that
+never complete on the web. Both are written up under "Open items and known issues", along
+with the near clip plane, the camera speed, the dangling lighting settings asset and a
+`Shader.Find` that asked for a built-in shader under URP.
+
 ## How TLE data reaches the app
 
 Clients never contact CelesTrak. `TleSource` tries two sources in order:
@@ -161,7 +176,7 @@ before a release so the bundled fallback is not stale.
 Tagging is the whole process:
 
 ```bash
-git tag -a v0.2.0 -m "..." && git push origin v0.2.0
+git tag -a v0.4.0 -m "..." && git push origin v0.4.0
 ```
 
 `.github/workflows/release.yml` then refreshes the TLE snapshot, builds WebGL through GameCI,
@@ -208,9 +223,11 @@ files keep their names, meta files and GUIDs, so no scene reference breaks.
 Largest remaining assets: `ISS_stationary.glb` at 48.8 MB (26 textures, none oversized on
 its own), then the audio tracks at roughly 10 MB each.
 
-Under Unity 6 the same build is 140 MB: `SatTrak.data.br` fell from 138 MB to 129 MB while
-`SatTrak.wasm.br` grew from 7.4 MB to 8.8 MB. The engine got bigger, the assets got slightly
-smaller, and the picture did not change — **the engine was never the problem.**
+The Unity 6 upgrade moved that to 140 MB on its own: `SatTrak.data.br` fell from 138 MB to
+129 MB while `SatTrak.wasm.br` grew from 7.4 MB to 8.8 MB. The engine got bigger, the assets
+got slightly smaller, and the picture did not change — **the engine was never the problem.**
+Streaming the music then took it to where it stands today, 134 MB on disk and 66 MB of first
+load.
 
 ### Where the 129 MB actually are
 
