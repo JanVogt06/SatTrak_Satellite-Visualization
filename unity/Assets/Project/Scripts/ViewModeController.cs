@@ -47,7 +47,7 @@ public class ViewModeController : MonoBehaviour
 
     private DayNightSystem dayNightSystem;
 
-    public float nearEarth = 1f;
+    public float nearEarth = 1000f;
     public float nearSpace = 100f;
 
     public Sprite spaceButtonNormal;
