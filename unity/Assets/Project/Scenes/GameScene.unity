@@ -29534,8 +29534,8 @@ MonoBehaviour:
   _enableTranslation: 0
   _translationSpeed: 55
   _enableMovement: 1
-  _movementSpeed: 100
-  _boostedSpeed: 1500
+  _movementSpeed: 2000
+  _boostedSpeed: 20000
   _boostSpeed: 304
   _moveUp: 32
   _moveDown: 99
