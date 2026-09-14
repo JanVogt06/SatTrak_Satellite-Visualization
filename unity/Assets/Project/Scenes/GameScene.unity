@@ -29606,7 +29606,7 @@ MonoBehaviour:
   fadePanel: {fileID: 1834950563}
   zoomSlider: {fileID: 1429009996}
   useDayNightSystem: 1
-  nearEarth: 1
+  nearEarth: 1000
   nearSpace: 100
   spaceButtonNormal: {fileID: 21300000, guid: 728f9982bed813542a9ad55a0c07dcdf, type: 3}
   spaceButtonDisabled: {fileID: 21300000, guid: 3ed1baf2ee52bf84fbedefbfffee03f6,
