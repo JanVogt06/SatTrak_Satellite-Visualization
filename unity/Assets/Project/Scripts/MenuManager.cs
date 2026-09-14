@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Localization.Settings;
 using UnityEngine.Localization;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.UI;
 
 public class MenuManager : MonoBehaviour
@@ -65,26 +66,29 @@ public class MenuManager : MonoBehaviour
 
         ApplyLocale(PlayerPrefs.GetInt(LocalePrefKey, 0));
 
-        UpdateLanguageDropdown();
-        UpdateQualityDropdown();
+        yield return RefreshLocalizedDropdowns();
 
-        LocalizationSettings.SelectedLocaleChanged += _ =>
-        {
-            UpdateLanguageDropdown();
-            UpdateQualityDropdown();
-        };
+        LocalizationSettings.SelectedLocaleChanged += _ => StartCoroutine(RefreshLocalizedDropdowns());
     }
 
-    void UpdateQualityDropdown()
+    private IEnumerator RefreshLocalizedDropdowns()
     {
-        var db = LocalizationSettings.StringDatabase;
+        yield return UpdateLanguageDropdown();
+        yield return UpdateQualityDropdown();
+    }
+
+    private IEnumerator UpdateQualityDropdown()
+    {
         var opts = new List<TMP_Dropdown.OptionData>();
 
         string[] keys = { "QL_Performance", "QL_Balanced", "QL_HighQuality" };
 
         for (int i = 0; i < keys.Length; i++)
         {
-            string label = db.GetLocalizedString("MainMenuTable", keys[i]);
+            var op = LocalizationSettings.StringDatabase.GetLocalizedStringAsync("MainMenuTable", keys[i]);
+            yield return op;
+
+            string label = op.Status == AsyncOperationStatus.Succeeded ? op.Result : null;
             if (string.IsNullOrEmpty(label)) label = QualitySettings.names[i];
             opts.Add(new TMP_Dropdown.OptionData(label));
         }
@@ -93,14 +97,18 @@ public class MenuManager : MonoBehaviour
         qualityDropdown.RefreshShownValue();
     }
 
-    void UpdateLanguageDropdown()
+    private IEnumerator UpdateLanguageDropdown()
     {
-        var db = LocalizationSettings.StringDatabase;
-        var opts = new List<TMP_Dropdown.OptionData>
-    {
-        new(db.GetLocalizedString(tableName, englishKey)),
-        new(db.GetLocalizedString(tableName, germanKey))
-    };
+        var opts = new List<TMP_Dropdown.OptionData>();
+
+        foreach (string key in new[] { englishKey, germanKey })
+        {
+            var op = LocalizationSettings.StringDatabase.GetLocalizedStringAsync(tableName, key);
+            yield return op;
+
+            string label = op.Status == AsyncOperationStatus.Succeeded ? op.Result : null;
+            opts.Add(new TMP_Dropdown.OptionData(string.IsNullOrEmpty(label) ? key : label));
+        }
 
         languageDropdown.options = opts;
         languageDropdown.RefreshShownValue();
@@ -235,6 +243,7 @@ public class MenuManager : MonoBehaviour
         resolutionDropdown.ClearOptions();
         resolutions = Screen.resolutions;
         resolutionOptions.Clear();
+
 
         for (int i = 0; i < resolutions.Length; i++)
         {
