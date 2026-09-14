@@ -18,7 +18,7 @@ The goal is to publish it as a WebGL build served from a container, installable 
 | WebGL build | works, 134 MB on disk, 66 MB first load, about 6 minutes on a warm library |
 | Container | built and tested locally, all headers verified |
 | Release | `v0.1.0` tagged, pipeline runs on `v*` tags |
-| Open blocker | Localization is dead on WebGL and the main menu has no labels at all |
+| Open blocker | none — the menu, the localization and the language switch all work in the browser |
 
 Cesium is gone, the TLE path no longer uses APIs WebGL lacks, and the asset budget has been
 cut far enough that the build loads in a browser. It has been verified end to end: the image
@@ -253,32 +253,47 @@ should take the first load to roughly 20 MB.
 
 ## Open items and known issues
 
-**Localization is broken on WebGL, and it is worse than it used to read here.** This is the
-one real blocker left, and it was reproduced against a Unity 6.6 build served locally: the
-four main menu buttons render as **empty outlines with no text at all**. The earlier note in
-this file claimed the English fallback still filled them in. It does not.
+**Localization and text rendering are fixed.** This was two separate faults wearing one
+costume, and the visible symptom — a main menu of empty outlines, no text anywhere, not even
+the static `Loading...` — belonged to the second one.
 
-The mechanism: `MenuManager.Awake` calls `ApplyLocale`, which touches
-`LocalizationSettings.AvailableLocales`. That throws, the exception leaves `Awake`, and every
-line after it — both dropdown fills and the button labels — never runs. So this is not a
-cosmetic fallback problem, it is an unusable menu. The browser console shows:
+*Fault one: the fonts were invisible.* `LeagueSpartan-Regular SDF` and `-Thin SDF` used the
+`TextMeshPro/Distance Field` shader, which does not render on the web under Unity 6.6 and URP
+17. Nothing was broken in the usual places: the font assets existed, the atlases were static
+and populated, the materials resolved, and the shader compiled into the build. A runtime dump
+showed every text component correct — content set, font assigned, colour white, alpha 1,
+geometry generated with the right bounds — and still nothing on screen. Swapping the material
+to `TextMeshPro/Mobile/Distance Field` at runtime made the whole menu appear at once. Both
+font assets now use the mobile shader, which is what Unity's own `LiberationSans SDF` already
+shipped with. **The tell was that Unity's IMGUI development console rendered text fine while
+no TMP text did** — that is the check to repeat if this ever comes back.
 
-```
-Exception: WebGLPlayer does not support synchronous Addressable loading.
-Please do not use WaitForCompletion on the WebGLPlayer platform.
-Locales PreloadOperation has not been initialized, can not return the available locales.
-```
+*Fault two: two Addressables operations never finish on the web.* Both
+`LocalizationSettings.InitializationOperation` and `LocalizationSettings.SelectedLocaleAsync`
+sit at `IsDone == false` forever — measured, not guessed: a 30 second poll of the first and a
+15 second poll of the second both timed out while the rest of localization worked normally.
+`LocalizationSettings.AvailableLocales.Locales` stays empty for the same reason. So:
 
-Unity's Localization package resolves locales synchronously through Addressables, which
-WebGL does not support. Menu text still appears through the English fallback, so it is not
-The fix is to await `LocalizationSettings.InitializationOperation` before anything touches
-locales, rather than letting the package block. Upgrading the package did not help: this was
-captured under Localization 1.5.12 on Unity 6000.6.0f1, and the exception is word for word
-the one 1.5.5 produced.
+- **Never yield on `InitializationOperation`.** It blocks forever. `MenuManager` gates on the
+  locales `PreloadOperation` instead, which does complete.
+- **Never read `LocalizationSettings.SelectedLocale`.** It is a synchronous property
+  (`AsyncOperationUtility.SynchronousLoad`), and on the web `WaitForCompletion` throws
+  unconditionally — there is no "already done" short circuit in `AsyncOperationBase`.
+- **Never index into `AvailableLocales.Locales`.** It is empty. `ApplyLocale` now matches on
+  the locale code and falls back to `Locale.CreateLocale`, which the string database accepts.
+- `GetLocalizedStringAsync` works fine. The dropdowns are filled from it; the synchronous
+  `GetLocalizedString` is what used to throw and abort `Awake` half way through.
 
-**Two inspector values still need tuning.** `ViewModeController.nearEarth` is 1 m, which
-causes z-fighting now that the city fly-to ends at 250 km, and `FreeFlyCamera` movement speed
-is far too slow for that altitude.
+Language switching now works at runtime, verified in a browser: picking German turns the
+whole UI German within a second or two.
+
+**Two inspector values were retuned, and both still deserve an eyeball.**
+`ViewModeController.nearEarth` was 1 m against a 1e9 m far plane — a depth ratio of 10^9, so
+a 24 bit depth buffer spent nearly all of its precision in the first few metres in front of
+the camera. It is now 1000 m, which clips nothing at the 250 km fly-to altitude. `FreeFlyCamera`
+went from 100 to 2000 m/s, boosted from 1500 to 20000; the cubic acceleration in
+`CalculateCurrentIncrease` still applies on top. Both numbers are reasoned rather than felt —
+**nobody has flown with them yet.** The principled fix is to scale the speed with altitude.
 
 **The earth mode has no terrain.** Cesium streamed 3D tiles; the globe is now an ellipsoid
 with one 4K NASA Blue Marble texture. City search, fly-to, free-fly, day/night and the
@@ -306,15 +321,21 @@ token returns, which for a publicly pulled container means every visitor streams
 account's quota. That last point is unrelated to Unity — CesiumJS would raise it too — but it
 has to be answered before terrain is worth starting.
 
-**One missing lighting settings asset** in `GameScene` (GUID
-`8bdf27f6e3fbb4f2f9f891fbf3dbf399`). It predates all of this work.
+**The missing lighting settings asset is gone.** `GameScene` pointed at GUID
+`8bdf27f6e3fbb4f2f9f891fbf3dbf399`, which does not exist; it is now `{fileID: 0}`, matching
+`MainMenu` and matching what Unity was already doing in practice.
 
-**Two runtime `Shader.Find` calls look wrong**, both older than the Unity 6 work.
-`SatelliteModelController.cs:187` asks for `"Standard"`, which is a built-in pipeline shader
-and renders magenta under URP. And `Shader.Find` at runtime only succeeds if the shader
-reached the build at all — with nothing referencing it from a scene, that is a WebGL-only
-failure that does not show up in the editor. Worth checking against a running build rather
-than assuming either way.
+**`Shader.Find("Standard")`** in `SatelliteModelController` now asks for
+`Universal Render Pipeline/Lit`. It was an unreachable fallback rather than a live bug, since
+`globalSpaceMaterial` is assigned in `GameScene`, but it would have rendered magenta the day
+that changed. `Shader.Find("Sprites/Default")` in `SatelliteOrbit` is fine — that shader is in
+the Always Included list.
+
+**`SphereCollider` is stripped from the web build.** The console repeats *Can't add component
+because class 'SphereCollider' doesn't exist!* — engine code stripping drops it because no
+scene object uses one and the primitives are created at runtime. Harmless where it was found
+(`SatelliteModelController` destroys the collider immediately anyway) but it points at a whole
+class of runtime-created components that stripping cannot see. Left alone deliberately.
 
 **The README screenshot** still shows the Cesium globe and is out of date.
 
