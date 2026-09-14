@@ -244,6 +244,9 @@ public class MenuManager : MonoBehaviour
         resolutions = Screen.resolutions;
         resolutionOptions.Clear();
 
+        if (resolutions.Length == 0)
+            resolutions = new[] { Screen.currentResolution };
+
 
         for (int i = 0; i < resolutions.Length; i++)
         {
