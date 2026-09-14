@@ -56,8 +56,14 @@ public class MenuManager : MonoBehaviour
 
     void Awake()
     {
-        int savedIndex = PlayerPrefs.GetInt(LocalePrefKey, 0);
-        ApplyLocale(savedIndex);
+        StartCoroutine(ApplySavedLocale());
+    }
+
+    private IEnumerator ApplySavedLocale()
+    {
+        yield return LocalizationSettings.InitializationOperation;
+
+        ApplyLocale(PlayerPrefs.GetInt(LocalePrefKey, 0));
 
         UpdateLanguageDropdown();
         UpdateQualityDropdown();
