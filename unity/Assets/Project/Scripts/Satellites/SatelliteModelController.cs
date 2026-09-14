@@ -184,7 +184,7 @@ namespace Satellites
             else
             {
 
-                renderer.sharedMaterial = new Material(Shader.Find("Standard"));
+                renderer.sharedMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
             }
 
             bool isEarthMode = zoomController && zoomController.targetCamera &&
