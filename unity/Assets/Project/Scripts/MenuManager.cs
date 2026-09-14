@@ -35,6 +35,8 @@ public class MenuManager : MonoBehaviour
     public TMP_Dropdown languageDropdown;
     private const string LocalePrefKey = "LocaleIndex";
 
+    private static readonly string[] LocaleCodes = { "en", "de" };
+
     private string tableName = "MainMenuTable";
     private string englishKey = "EnglishLbl";
     private string germanKey = "GermanLbl";
@@ -107,16 +109,13 @@ public class MenuManager : MonoBehaviour
     {
         var opts = new List<TMP_Dropdown.OptionData>();
 
-        foreach (Locale locale in LocalizationSettings.AvailableLocales.Locales)
+        foreach (string key in new[] { englishKey, germanKey })
         {
-            string code = locale.Identifier.Code;
-            string key = code.StartsWith("de") ? germanKey : englishKey;
-
             var op = LocalizationSettings.StringDatabase.GetLocalizedStringAsync(tableName, key);
             yield return op;
 
             string label = op.Status == AsyncOperationStatus.Succeeded ? op.Result : null;
-            opts.Add(new TMP_Dropdown.OptionData(string.IsNullOrEmpty(label) ? code : label));
+            opts.Add(new TMP_Dropdown.OptionData(string.IsNullOrEmpty(label) ? key : label));
         }
 
         languageDropdown.options = opts;
@@ -139,10 +138,18 @@ public class MenuManager : MonoBehaviour
 
     private static void ApplyLocale(int index)
     {
-        IList<Locale> locales = LocalizationSettings.AvailableLocales.Locales;
+        if (index < 0 || index >= LocaleCodes.Length) return;
 
-        if (index >= 0 && index < locales.Count)
-            LocalizationSettings.SelectedLocale = locales[index];
+        foreach (Locale known in LocalizationSettings.AvailableLocales.Locales)
+        {
+            if (known.Identifier.Code.StartsWith(LocaleCodes[index]))
+            {
+                LocalizationSettings.SelectedLocale = known;
+                return;
+            }
+        }
+
+        LocalizationSettings.SelectedLocale = Locale.CreateLocale(LocaleCodes[index]);
     }
 
     void BindEvents()
