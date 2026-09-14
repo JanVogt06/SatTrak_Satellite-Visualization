@@ -7,11 +7,6 @@ public class CustomCursor : MonoBehaviour
 
     private Texture2D lastCursorTexture;
 
-    void Start()
-    {
-        ApplyCursor();
-    }
-
     public void ApplyCursor()
     {
         if (CrosshairSettings.cursorTexture == null)
