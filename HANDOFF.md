@@ -6,7 +6,7 @@ who has not seen the earlier work.
 ## Where the project stands
 
 SatTrak is a Unity satellite visualization. It downloads TLE orbital elements, propagates
-them with SGP4 and renders 5000+ satellites around a globe.
+them with SGP4 and renders the full active catalogue, about 16000 satellites, around a globe.
 
 The goal is to publish it as a WebGL build served from a container, installable with
 `docker compose pull` like PicHunter, SolarFlow and the Spesen generator.
@@ -15,9 +15,9 @@ The goal is to publish it as a WebGL build served from a container, installable 
 | --- | --- |
 | Unity | 6000.6.0f1 |
 | Runs in the editor | yes, no account or API key needed |
-| WebGL build | works, 134 MB on disk, 66 MB first load, about 6 minutes on a warm library |
+| WebGL build | works, 139 MB on disk, 51 MB first load, 5 to 10 minutes on a warm library |
 | Container | rebuilt on Unity 6 and verified end to end through nginx, music cache rule included |
-| Release | `v0.3.0` tagged, pipeline runs on `v*` tags |
+| Release | `v0.3.0` tagged, pipeline runs on `v*` tags; everything below is on `main`, untagged |
 | Open blocker | none — the menu, the localization and the language switch all work in the browser |
 
 Cesium is gone, the TLE path no longer uses APIs WebGL lacks, and the asset budget has been
@@ -29,8 +29,16 @@ carries the right headers: the `.br` files go out with `Content-Encoding: br` an
 type, the loader and `index.html` with `no-cache`, `/tle/active.txt` with ten minutes, and
 `/StreamingAssets/music/` as `audio/mpeg` with the one year immutable rule. In the browser the
 menu renders, the TLE file comes from `/tle/active.txt` rather than the bundled fallback, a
-track streams, and the game scene loads with the globe and its satellites. The satellites take
-around a minute to appear, which is the load of 16046 element sets, not a fault.
+track streams, and the game scene loads with the globe and its satellites within about ten
+seconds.
+
+**Do not measure anything in a browser pane you cannot see.** Chrome throttles
+`requestAnimationFrame` in a hidden pane to about one frame per second, and Unity's player loop
+runs on it. Under that throttle the satellites took a minute to appear and the ISS model took
+twelve minutes to load, and both looked like bugs. Everything measured here was measured in a
+headless Chrome started with `--disable-background-timer-throttling
+--disable-renderer-backgrounding --use-angle=metal`, driven over the DevTools protocol, which
+renders on the GPU at a steady 60 frames per second in the menu.
 
 The image itself has only been built on an arm64 Mac. The `linux/amd64` half and the CI
 licence are still proven only by the first tagged Unity 6 run.
@@ -51,7 +59,7 @@ Add `unity/` as a project in Unity Hub. There is no token or config file to fill
 
 ## What changed
 
-87 commits, in seven blocks.
+95 commits, in eight blocks.
 
 **Cleanup.** The repository was restructured: `unity/Assets/Project` holds everything
 written for this project, `unity/Assets/ThirdParty` holds vendored assets. Dead code and
@@ -115,8 +123,8 @@ kept that scheme. Scenes and prefabs were not touched at all; of 590 changed fil
 
 `EarthDayNightOverlay.shader` was ported from `CGPROGRAM`/`UnityCG.cginc` to URP HLSL. It
 still compiled under the old syntax, but that path is legacy under an SRP and the shader had
-no `CBUFFER`, so it was not SRP Batcher compatible either. The translation is line for line;
-**the terminator still deserves one visual check**, which a headless build cannot give.
+no `CBUFFER`, so it was not SRP Batcher compatible either. The translation is line for line,
+and the visual check it was waiting for has been done in the browser — see the next block.
 
 **Coordinates and time.** Checking the terminator turned up three faults that predate every
 change here and that nobody could have seen from orbit, because a cloud of 16000 dots around a
@@ -144,6 +152,10 @@ sphere looks right in any orientation. All three are fixed and verified in the b
 
 The terminator shader itself was fine — the port is line for line, and the strong blue of the
 night side is `_NightColor (0, 0, 1, 0.4)`, unchanged since the day/night system was written.
+
+**Performance and caching.** The ISS model now loads on demand, distant satellite models are
+hidden in earth mode, the build files carry content hashes, and the free fly speed follows the
+altitude. Each is written up below, under the asset budget and the open items.
 
 **Making it work in a browser.** The music left the build and now streams from
 `StreamingAssets`, which halved the first load. Then the reason nobody had noticed how broken
@@ -292,12 +304,31 @@ Verified by serving the build locally with brotli headers and watching the reque
 `GET /StreamingAssets/music/Quiet%20Wormhole.mp3` returned 200 and the audio context
 resumed.
 
-**Load the ISS model on demand — still open, and now the largest single item.** Of the 57 MB
-that remain, roughly 49 MB is `ISS_stationary.glb`. Its textures are not the issue: all 26
-are 512x512 and total 9.2 MB of the glb. The other ~12 MB is geometry, which
-`tools/shrink-model-textures.py` cannot touch by design. Load the glb at runtime through
-glTFast when the camera approaches the ISS instead of shipping it in every first load. That
-should take the first load to roughly 20 MB.
+**The ISS model loads on demand — done, and it saved less than predicted.** The glb now lives
+in `unity/Assets/StreamingAssets/models/`, where Unity does not import it, and
+`SatelliteModelController` loads it through glTFast the first time the camera comes within
+5000 km of the ISS in earth mode. Until then the ISS wears a random generic model. nginx serves
+the file gzip compressed from a copy the Dockerfile writes, 14.0 MB on the wire instead of
+21.8 MB, revalidated with an ETag rather than cached for a year.
+
+`SatTrak.data.br` fell from 59.7 MB to 42.3 MB, and the first load from about 68 MB to about
+51 MB. The 20 MB this section used to promise was wrong: the 49 MB the ISS took was the
+*uncompressed* size from the build report, and after Brotli it had only ever been 17 MB of the
+download. What remains is mostly the textures of the 24 other satellite models, about 100 MB
+uncompressed in the build report. They are the next lever, and the same on demand path would
+work for them.
+
+Three things had to be right for this to work, and each is worth knowing before touching it:
+
+- **Shader variants.** glTFast builds materials at runtime from shader graphs, and a build only
+  contains the variants something referenced at build time. All 29 ISS materials use the
+  keyword-free `glTF-pbrMetallicRoughness` variant, which 158 materials of the editor imported
+  models already pull in. A model with alpha, emission or texture transforms would need its
+  variants added to a shader variant collection first, or it renders magenta.
+- **`UninterruptedDeferAgent`.** glTFast's default spreads a load across frames, and this one
+  took about 1800 frames. At the frame rate of earth mode that was twelve minutes. Without
+  deferral it takes two to six seconds with one visible hitch.
+- **`ConsoleLogger`.** Without a logger glTFast fails silently.
 
 ## Open items and known issues
 
@@ -335,13 +366,46 @@ sit at `IsDone == false` forever — measured, not guessed: a 30 second poll of 
 Language switching now works at runtime, verified in a browser: picking German turns the
 whole UI German within a second or two.
 
-**Two inspector values were retuned, and both still deserve an eyeball.**
-`ViewModeController.nearEarth` was 1 m against a 1e9 m far plane — a depth ratio of 10^9, so
-a 24 bit depth buffer spent nearly all of its precision in the first few metres in front of
-the camera. It is now 1000 m, which clips nothing at the 250 km fly-to altitude. `FreeFlyCamera`
-went from 100 to 2000 m/s, boosted from 1500 to 20000; the cubic acceleration in
-`CalculateCurrentIncrease` still applies on top. Both numbers are reasoned rather than felt —
-**nobody has flown with them yet.** The principled fix is to scale the speed with altitude.
+**Earth mode ran at three frames per second — fixed.** Every one of the 16045 satellites
+switched its full 3D model on in earth mode, including the ones on the far side of the planet.
+Measured on an M3: 3.4 frames per second with satellites shown, 51 with them hidden. Models are
+now only shown within `SatelliteModelController.earthModeModelDistance`, 2000 km by default,
+which is about the range `FreeFlyCamera.maxDistance` already used for picking. A 40 km model
+at that distance is around twenty pixels. Earth mode now runs at 33 frames per second.
+
+**Space mode runs at 13 to 17 frames per second** on the same machine and was not looked into.
+Sixteen thousand `SatelliteModelController.Update` calls a frame are the first suspect.
+
+**The build files were cached for a year under fixed names — fixed.** nginx sends every
+`.br` file with `max-age=31536000, immutable`, but Unity named them `SatTrak.data.br`,
+`SatTrak.wasm.br` and so on. After a release a returning browser fetched the new `index.html`
+and loader and kept the old engine: the request log showed `data.br` fetched again and
+`wasm.br` and `framework.js.br` not at all. Twice in testing that combination hung the page
+before the menu. `webGLNameFilesAsHashes` is now on, so a new build means new URLs, and
+`BuildWebGL.Run` empties the `Build` folder first so old hashes do not pile up in the image.
+
+**The free fly speed follows the altitude now.** `FreeFlyCamera` moves at a tenth of its
+altitude per second, never slower than 100 m/s, and `Shift` multiplies that by ten: 25 km/s at
+the 250 km fly-to altitude, 100 m/s near the ground. The old note claimed a cubic acceleration
+applied on top; it does not, `_enableSpeedAcceleration` is off in the scene. Like
+`ViewModeController.nearEarth`, now 1000 m instead of 1 m, **these numbers are reasoned, not
+flown.** Nobody has steered the camera with a keyboard since.
+
+**The search filter dropdown was empty in German.** `SearchPanelController` filled it with the
+synchronous `GetLocalizedString` in `Start`, before the German table had loaded. It now uses
+`GetLocalizedStringAsync`, like the menu dropdowns.
+
+**Satellite tracking works, but not for the reasons it looks like.**
+`SearchPanelController.TheLoop` writes the satellite's Unity position in metres into
+`georeference.latitude`, `longitude` and `height`, and
+`ViewModeController.ZoomToPositionSatellite` writes the same metres into the camera's
+`GlobeAnchor` as longitude, latitude and height. Both get the same nonsense coordinate, which
+puts the camera at the new origin, and the orbit controller then places it near the satellite.
+The fly-in animation divides by zero (`Time.deltaTime / 0`), so it jumps in one frame. All of
+this predates the work here and was left alone because it produces the right picture; anyone
+changing tracking should replace it with a geodetic position from SGP4 rather than patch it.
+In one of five test runs the camera ended up next to the satellites around the ISS rather than
+on it. That run could not be repeated.
 
 **The earth mode has no terrain.** Cesium streamed 3D tiles; the globe is now an ellipsoid
 with one 4K NASA Blue Marble texture. City search, fly-to, free-fly, day/night and the
@@ -384,9 +448,6 @@ because class 'SphereCollider' doesn't exist!* — engine code stripping drops i
 scene object uses one and the primitives are created at runtime. Harmless where it was found
 (`SatelliteModelController` destroys the collider immediately anyway) but it points at a whole
 class of runtime-created components that stripping cannot see. Left alone deliberately.
-
-**The README screenshot** still shows the Cesium globe and is out of date. It also shows the
-satellites in the old, rotated frame.
 
 **The music is cached for a year under unhashed names.** `/StreamingAssets/music/` is served
 `immutable`, but the files are plain track names. Re-encode a track under the same name and
