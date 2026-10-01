@@ -1,30 +1,35 @@
 # SatTrak
 
 Interactive 3D satellite visualization built in Unity. TLE orbital elements are pulled from
-CelesTrak and propagated with an SGP4 implementation to place more than 5000 active
-satellites on a textured globe.
+CelesTrak and propagated with an SGP4 implementation to place the full active catalogue,
+around 16000 satellites, on a textured globe. It runs in the browser as a WebGL build served
+from a container.
 
 ![SatTrak](screenshots/main-view.png)
 
 New to the project? [HANDOFF.md](HANDOFF.md) has the current state, what changed and what
 is left to do, including the container and release plan.
 
-## Status
+## Running it
 
-Cesium has been removed. The globe is a generated WGS84 ellipsoid mesh textured with NASA
-Blue Marble imagery, and the georeference math lives in `Assets/Project/Scripts/Geo`. No
-account and no API key are needed to run the project.
+```bash
+docker compose pull && docker compose up -d
+```
 
-The remaining work towards a browser build is the asset budget: `cities.json` alone is
-189 MB and is parsed into roughly 700 MB of managed heap at startup, which no browser
-will survive.
+The app is then served on port 8003, or whatever `SATTRAK_PORT` says. The image is
+`ghcr.io/janvogt06/sattrak` and is published for `linux/amd64` and `linux/arm64` on every
+`v*` tag.
+
+No account and no API key are needed, neither for the container nor for the editor. The
+globe is a generated WGS84 ellipsoid textured with NASA Blue Marble imagery; Cesium is gone.
 
 ## TLE data
 
 Clients never talk to CelesTrak. `SatelliteManager` asks the hosting server for
 `tle/active.txt` first and falls back to the snapshot bundled under
-`unity/Assets/StreamingAssets/tle/active.txt`. In the planned container, nginx serves that
-path from CelesTrak with a two hour cache, so one upstream request covers every visitor.
+`unity/Assets/StreamingAssets/tle/active.txt`. The container fetches that file from CelesTrak
+once at start and then every two hours, so one upstream request covers every visitor.
+`TLE_REFRESH_SECONDS` changes the interval, `0` turns the refresh off.
 
 Refresh the bundled snapshot with:
 
@@ -62,24 +67,26 @@ Space mode:
 | Input | Action |
 | --- | --- |
 | Left mouse drag | Rotate the globe |
-| Scroll wheel | Zoom |
-| `Esc` | Open the menu |
+| Scroll wheel over the time slider | Change the slider step |
+| `Esc` | Close the help panel |
 
 Earth mode:
 
 | Input | Action |
 | --- | --- |
 | `Esc` | Toggle inspection and camera mode |
-| `W` `A` `S` `D` | Move |
+| `W` `A` `S` `D` or arrow keys | Move, faster the higher you are |
+| `Space` / `C` | Move up / down |
 | Mouse | Look around |
-| `Shift` | Move faster |
-| Scroll wheel | Move forward and backward |
+| `Shift` | Move ten times faster |
 | `R` | Return to the start position |
 
 ## Repository layout
 
 ```
 HANDOFF.md                    State of the project and open work
+Dockerfile, docker/           nginx image and its TLE refresh entrypoint
+art-source/                   Full quality originals of shrunk models and music (Git LFS)
 screenshots/                  README image
 tools/                        Maintenance scripts
 unity/
@@ -89,7 +96,6 @@ unity/
     Project/                  Everything written for this project
       Art/                    Animations, fonts, images, materials, UI sprites
       Art/Earth/              Blue Marble texture and globe material (Git LFS)
-      Audio/                  Background music
       Data/Cities/            GeoNames city database (Git LFS)
       Localization/           German and English string tables
       Models/                 Satellite models (Git LFS)
@@ -98,7 +104,10 @@ unity/
       Scenes/                 MainMenu and GameScene
       Scripts/
       Settings/               URP render pipeline assets
-    StreamingAssets/tle/      Bundled TLE snapshot, served as a loose file
+    StreamingAssets/          Served as loose files next to the build
+      models/                 ISS model, loaded on demand (Git LFS)
+      music/                  Background music, streamed (Git LFS)
+      tle/                    Bundled TLE snapshot
     ThirdParty/               Vendored assets, kept as delivered
       DoubleSlider/           Altitude range slider
       SGP/                    SGP4 propagator port
@@ -116,8 +125,8 @@ unity/
 | `Satellites/Satellite` | Per-satellite state and orbital elements |
 | `Satellites/SatelliteOrbit` | Orbit path rendering |
 | `Satellites/SatelliteModelController` | Model and sphere switching per camera mode |
-| `Satellites/MoveSatelliteJobParallelForTransform` | Burst job moving satellite transforms |
-| `Satellites/ConversionExtensions` | SGP to Unity coordinate conversion |
+| `Satellites/MoveSatelliteJobParallelForTransform` | Job moving satellite transforms |
+| `Satellites/ConversionExtensions` | ECI to earth fixed coordinate conversion |
 | `Satellites/TleSource` | Loads TLE data from the server, falls back to the bundled snapshot |
 | `Geo/Wgs84` | Ellipsoid math: geodetic and ECEF conversion, East-Up-North frame |
 | `Geo/Georeference` | Local frame origin, ECEF transforms, floating origin |
