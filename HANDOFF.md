@@ -16,20 +16,24 @@ The goal is to publish it as a WebGL build served from a container, installable 
 | Unity | 6000.6.0f1 |
 | Runs in the editor | yes, no account or API key needed |
 | WebGL build | works, 134 MB on disk, 66 MB first load, about 6 minutes on a warm library |
-| Container | built and verified before Unity 6; the music cache rule added since is untested |
+| Container | rebuilt on Unity 6 and verified end to end through nginx, music cache rule included |
 | Release | `v0.3.0` tagged, pipeline runs on `v*` tags |
 | Open blocker | none — the menu, the localization and the language switch all work in the browser |
 
 Cesium is gone, the TLE path no longer uses APIs WebGL lacks, and the asset budget has been
 cut far enough that the build loads quickly in a browser.
 
-What has been verified, and how, matters here. The current build was driven by hand in a
-browser against a local static server with brotli headers: the menu renders, the language
-switch works, the music streams, the game scene loads with the globe and its satellites. The
-**container** has not been rebuilt since the Unity 6 upgrade — the last end to end run through
-nginx was on `v0.1.0`, and `docker/default.conf` has gained a `/StreamingAssets/music/` cache
-rule since that nobody has exercised. That is the first thing to check before trusting a
-release.
+What has been verified, and how, matters here. The current build was run from the container
+image, built locally with `docker build`, and driven by hand in a browser. Every response type
+carries the right headers: the `.br` files go out with `Content-Encoding: br` and the right MIME
+type, the loader and `index.html` with `no-cache`, `/tle/active.txt` with ten minutes, and
+`/StreamingAssets/music/` as `audio/mpeg` with the one year immutable rule. In the browser the
+menu renders, the TLE file comes from `/tle/active.txt` rather than the bundled fallback, a
+track streams, and the game scene loads with the globe and its satellites. The satellites take
+around a minute to appear, which is the load of 16046 element sets, not a fault.
+
+The image itself has only been built on an arm64 Mac. The `linux/amd64` half and the CI
+licence are still proven only by the first tagged Unity 6 run.
 
 ## Getting it running
 
@@ -47,7 +51,7 @@ Add `unity/` as a project in Unity Hub. There is no token or config file to fill
 
 ## What changed
 
-83 commits, in six blocks.
+87 commits, in seven blocks.
 
 **Cleanup.** The repository was restructured: `unity/Assets/Project` holds everything
 written for this project, `unity/Assets/ThirdParty` holds vendored assets. Dead code and
@@ -113,6 +117,33 @@ kept that scheme. Scenes and prefabs were not touched at all; of 590 changed fil
 still compiled under the old syntax, but that path is legacy under an SRP and the shader had
 no `CBUFFER`, so it was not SRP Batcher compatible either. The translation is line for line;
 **the terminator still deserves one visual check**, which a headless build cannot give.
+
+**Coordinates and time.** Checking the terminator turned up three faults that predate every
+change here and that nobody could have seen from orbit, because a cloud of 16000 dots around a
+sphere looks right in any orientation. All three are fixed and verified in the browser.
+
+- *Satellites were drawn in the wrong frame.* `ToSphericalEcef` in the vendored SGP code
+  returns `(-r cos φ cos λ, r sin φ, r cos φ sin λ)` — Y as the polar axis, X mirrored — and
+  that went straight into the true ECEF to local matrix. The globe uses WGS84 ECEF with Z at
+  the pole, so the whole constellation was rotated 180° about an oblique axis: a satellite
+  over Jena was drawn over Indonesia at 7° N, 128° E, and the geostationary belt ran over the
+  poles. `ConversionExtensions.ToEcef` now rotates the ECI position by GMST, the same angle
+  SGP's own `ToGeodetic` uses. **The check to repeat:** look at the earth from the equator and
+  the geostationary belt must be a horizontal line through it.
+- *Satellites ran ahead by the UTC offset.* `TimeSlider` keeps local time, and
+  `CurrentTime - Epoch` subtracts a local from a UTC `DateTime`, which ignores `Kind`. In
+  Germany that put every satellite one or two hours ahead — more than an orbit for anything
+  in LEO. `TimeSlider.CurrentSimulatedTimeUtc` exists for consumers; the display stays local.
+- *The sun was in a frame that does not exist.* `DayNightSystem` built the sun direction with
+  +Y as the earth's axis and used it as a world direction, but the world is East-Up-North at
+  an origin that follows the camera. Europe sat in the dark at noon. The sun position now comes
+  from the Astronomical Almanac's low precision formula (about 0.01°), rotated by GMST into
+  ECEF and mapped through `Georeference`. Checked against the equation of time for three dates,
+  then in the browser: Europe and Africa lit at 13:00 UTC, the Arctic in polar night and
+  Antarctica in sunlight a week after the equinox.
+
+The terminator shader itself was fine — the port is line for line, and the strong blue of the
+night side is `_NightColor (0, 0, 1, 0.4)`, unchanged since the day/night system was written.
 
 **Making it work in a browser.** The music left the build and now streams from
 `StreamingAssets`, which halved the first load. Then the reason nobody had noticed how broken
@@ -354,7 +385,12 @@ scene object uses one and the primitives are created at runtime. Harmless where 
 (`SatelliteModelController` destroys the collider immediately anyway) but it points at a whole
 class of runtime-created components that stripping cannot see. Left alone deliberately.
 
-**The README screenshot** still shows the Cesium globe and is out of date.
+**The README screenshot** still shows the Cesium globe and is out of date. It also shows the
+satellites in the old, rotated frame.
+
+**The music is cached for a year under unhashed names.** `/StreamingAssets/music/` is served
+`immutable`, but the files are plain track names. Re-encode a track under the same name and
+returning visitors keep the old one for a year. Rename the file when the content changes.
 
 **CelesTrak throttling** is easy to trip. It answers with HTTP 200 and a plain text notice
 rather than an error, and polling in a loop earns an HTTP 403 for a while. Both the runtime
