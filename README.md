@@ -7,6 +7,8 @@ from a container.
 
 ![SatTrak](screenshots/main-view.png)
 
+![Terrain over the Colorado Front Range, 40 km up](screenshots/terrain-view.jpg)
+
 New to the project? [HANDOFF.md](HANDOFF.md) has the current state, what changed and what
 is left to do, including the container and release plan.
 
