@@ -20,8 +20,10 @@ The app is then served on port 8003, or whatever `SATTRAK_PORT` says. The image 
 `ghcr.io/janvogt06/sattrak` and is published for `linux/amd64` and `linux/arm64` on every
 `v*` tag.
 
-No account and no API key are needed, neither for the container nor for the editor. The
-globe is a generated WGS84 ellipsoid textured with NASA Blue Marble imagery; Cesium is gone.
+No account and no API key are needed, neither for the container nor for the editor, nor for
+anyone opening the page. From orbit the globe is a generated WGS84 ellipsoid with NASA Blue
+Marble imagery. Closer in, terrain and Sentinel-2 imagery stream as tiles straight from two
+open services, Mapzen Terrain Tiles on AWS and EOX Sentinel-2 cloudless 2016.
 
 ## TLE data
 
@@ -104,6 +106,7 @@ unity/
       Scenes/                 MainMenu and GameScene
       Scripts/
       Settings/               URP render pipeline assets
+    WebGLTemplates/SatTrak/   The web page around the player: loader, toolbar, credits
     StreamingAssets/          Served as loose files next to the build
       models/                 ISS model, loaded on demand (Git LFS)
       music/                  Background music, streamed (Git LFS)
@@ -132,6 +135,8 @@ unity/
 | `Geo/Georeference` | Local frame origin, ECEF transforms, floating origin |
 | `Geo/GlobeAnchor` | Keeps a transform fixed to a geographic position |
 | `Geo/EarthGlobe` | Generates the textured globe mesh |
+| `Geo/TerrainTiles` | Picks, loads and caches terrain tiles near the camera |
+| `Geo/TerrainTile`, `Geo/TerrainTileKey` | One tile's mesh and its Web Mercator address |
 | `ViewModeController` | Transition between space and earth mode |
 | `FreeFlyCamera` | First person camera for earth mode |
 | `GlobeRotationController` | Orbit camera around the globe |
@@ -167,6 +172,11 @@ unity/
 - City database: [GeoNames](https://www.geonames.org/)
 - Satellite models: NASA
 - Earth texture: NASA Visible Earth, Blue Marble Next Generation (public domain)
+- Terrain: [Mapzen Terrain Tiles](https://registry.opendata.aws/terrain-tiles/) on AWS Open
+  Data, with the upstream sources listed in the page's info dialog
+- Imagery: [Sentinel-2 cloudless](https://s2maps.eu) by EOX IT Services GmbH (contains modified
+  Copernicus Sentinel data 2016), CC BY 4.0
+- Typeface: League Spartan, SIL Open Font License
 
 ## Credits
 
