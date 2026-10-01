@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
@@ -6,8 +7,14 @@ using UnityEngine;
 
 public static class BuildWebGL
 {
+    private const string OutputPath = "../build/WebGL/SatTrak";
+
     public static void Run()
     {
+        var staleBuild = Path.Combine(OutputPath, "Build");
+        if (Directory.Exists(staleBuild))
+            Directory.Delete(staleBuild, true);
+
         var scenes = EditorBuildSettings.scenes
             .Where(s => s.enabled)
             .Select(s => s.path)
@@ -18,7 +25,7 @@ public static class BuildWebGL
         var options = new BuildPlayerOptions
         {
             scenes = scenes,
-            locationPathName = "../build/WebGL/SatTrak",
+            locationPathName = OutputPath,
             target = BuildTarget.WebGL,
             targetGroup = BuildTargetGroup.WebGL,
             options = BuildOptions.None
