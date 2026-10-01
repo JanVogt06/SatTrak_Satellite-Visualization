@@ -22,6 +22,7 @@ namespace TimeSlider
         [Header("Simulation Time Settings")] public float timeMultiplier = 1f;
 
         public DateTime CurrentSimulatedTime { get; private set; }
+        public DateTime CurrentSimulatedTimeUtc => CurrentSimulatedTime.ToUniversalTime();
         private DateTime _simulationStartTime;
         private float _simulationTimeSeconds = 0f;
 

@@ -119,7 +119,7 @@ namespace Satellites
 
             var job = new MoveSatelliteJobParallelForTransform
             {
-                CurrentTime = time.CurrentSimulatedTime,
+                CurrentTime = time.CurrentSimulatedTimeUtc,
                 EcefToLocalMatrix = georeference.ecefToLocalMatrix,
                 OrbitPropagator = _propagators,
                 Positions = _currentPositions
@@ -147,7 +147,7 @@ namespace Satellites
         {
             foreach (var satellite in _satellites)
             {
-                var timeInMinutes = (time.CurrentSimulatedTime - satellite.OrbitPropagator.Orbit.Epoch).TotalMinutes;
+                var timeInMinutes = (time.CurrentSimulatedTimeUtc - satellite.OrbitPropagator.Orbit.Epoch).TotalMinutes;
                 var geoCoord = satellite.OrbitPropagator.FindPosition(timeInMinutes).ToGeodetic();
                 if (geoCoord.Altitude < min || (!Mathf.Approximately(altitudeSlider._maxValue, max) && geoCoord.Altitude > max))
                     satellite.gameObject.SetActive(false);
