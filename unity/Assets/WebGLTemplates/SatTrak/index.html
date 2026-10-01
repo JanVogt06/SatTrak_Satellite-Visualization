@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>{{{ PRODUCT_NAME }}} · Every active satellite, live</title>
+    <meta name="description" content="A live 3D view of every active satellite in orbit, propagated from CelesTrak orbital elements and rendered in your browser.">
+    <meta name="theme-color" content="#05070d">
+    <meta property="og:title" content="{{{ PRODUCT_NAME }}}">
+    <meta property="og:description" content="Every active satellite in orbit, live in your browser.">
+    <link rel="icon" type="image/svg+xml" href="TemplateData/favicon.svg">
+    <link rel="stylesheet" href="TemplateData/style.css">
+#if SHOW_DIAGNOSTICS
+    <link rel="stylesheet" href="<<<TemplateData/diagnostics.css>>>">
+    <script src="<<<TemplateData/diagnostics.js>>>"></script>
+#endif
+  </head>
+  <body>
+    <canvas id="unity-canvas" tabindex="-1" aria-label="{{{ PRODUCT_NAME }}}"></canvas>
+
+    <div id="loader" role="status" aria-live="polite">
+      <canvas id="stars" aria-hidden="true"></canvas>
+      <div class="horizon" aria-hidden="true"></div>
+
+      <div class="card">
+        <svg class="orbits" viewBox="-60 -60 120 120" aria-hidden="true">
+          <defs>
+            <radialGradient id="planet" cx="35%" cy="30%" r="75%">
+              <stop offset="0%" stop-color="#7fb4ff"/>
+              <stop offset="55%" stop-color="#2a5ad8"/>
+              <stop offset="100%" stop-color="#0b1a4a"/>
+            </radialGradient>
+          </defs>
+          <circle r="15" fill="url(#planet)"/>
+          <g class="ring ring-a">
+            <ellipse rx="42" ry="14"/>
+            <circle class="sat" r="2.2"><animateMotion dur="5s" repeatCount="indefinite" path="M42,0 A42,14 0 1,1 -42,0 A42,14 0 1,1 42,0"/></circle>
+          </g>
+          <g class="ring ring-b">
+            <ellipse rx="30" ry="9"/>
+            <circle class="sat" r="1.8"><animateMotion dur="3.2s" repeatCount="indefinite" path="M-30,0 A30,9 0 1,1 30,0 A30,9 0 1,1 -30,0"/></circle>
+          </g>
+          <g class="ring ring-c">
+            <ellipse rx="54" ry="20"/>
+            <circle class="sat sat-accent" r="2.4"><animateMotion dur="8s" repeatCount="indefinite" path="M54,0 A54,20 0 1,1 -54,0 A54,20 0 1,1 54,0"/></circle>
+          </g>
+        </svg>
+
+        <h1 class="wordmark">SatTrak</h1>
+        <p class="tagline">Every active satellite. Live.</p>
+
+        <div class="progress" aria-hidden="true"><div id="progress-fill"></div></div>
+        <div class="progress-meta">
+          <span id="stage">Loading the engine</span>
+          <span id="percent">0 %</span>
+        </div>
+
+        <p class="hint" id="hint">About 50 MB on the first visit, cached after that.</p>
+      </div>
+
+      <noscript><p class="fatal">SatTrak needs JavaScript and WebGL 2.</p></noscript>
+    </div>
+
+    <nav id="toolbar" aria-label="Page controls">
+      <button type="button" id="info-button" aria-label="About and data sources" title="About and data sources">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg>
+      </button>
+      <button type="button" id="fullscreen-button" aria-label="Toggle fullscreen" title="Fullscreen">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      </button>
+    </nav>
+
+    <dialog id="about">
+      <div class="dialog-body">
+        <header>
+          <h2>SatTrak</h2>
+          <button type="button" class="close" aria-label="Close" data-close>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </header>
+        <p>A live view of the full active satellite catalogue. Orbital elements come from CelesTrak, are refreshed every two hours and propagated with SGP4 right here in your browser.</p>
+
+        <h3>Controls</h3>
+        <dl class="keys">
+          <dt>Drag</dt><dd>Rotate the globe</dd>
+          <dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></dt><dd>Fly in earth view</dd>
+          <dt><kbd>Space</kbd> <kbd>C</kbd></dt><dd>Up and down</dd>
+          <dt><kbd>Shift</kbd></dt><dd>Ten times faster</dd>
+          <dt><kbd>Esc</kbd></dt><dd>Camera or inspect mode</dd>
+        </dl>
+
+        <h3>Data</h3>
+        <ul class="sources">
+          <li>Orbital elements: <a href="https://celestrak.org/" target="_blank" rel="noopener">CelesTrak</a></li>
+          <li>Earth: NASA Visible Earth, Blue Marble Next Generation</li>
+          <li>Imagery: <a href="https://s2maps.eu" target="_blank" rel="noopener">Sentinel-2 cloudless</a> by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2016), CC BY 4.0</li>
+          <li>
+            <details>
+              <summary>Terrain: <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noopener">Mapzen Terrain Tiles</a> on AWS Open Data</summary>
+              <p class="fine">ArcticDEM: DEMs created from DigitalGlobe, Inc. imagery, funded under NSF awards 1043681, 1559691 and 1542736 · © Commonwealth of Australia (Geoscience Australia) 2017 · © offene Daten Österreichs, Digitales Geländemodell (DGM) Österreich · Contains information licensed under the Open Government Licence – Canada · EU-DEM: produced using Copernicus data and information funded by the European Union · ETOPO1: U.S. National Oceanic and Atmospheric Administration · Source: INEGI, Continental relief, 2016 · Copyright 2011 Crown copyright (c) Land Information New Zealand and the New Zealand Government · © Kartverket · © Environment Agency copyright and/or database right 2015, all rights reserved · 3DEP, GMTED2010 and SRTM courtesy of the U.S. Geological Survey</p>
+            </details>
+          </li>
+          <li>Cities: <a href="https://www.geonames.org/" target="_blank" rel="noopener">GeoNames</a>, CC BY 4.0</li>
+          <li>Satellite models: NASA</li>
+          <li>Typeface: League Spartan, SIL Open Font License</li>
+        </ul>
+
+        <p class="credit">A university project at FSU Jena. <a href="https://github.com/JanVogt06/SatTrak_Satellite-Visualization" target="_blank" rel="noopener">Source on GitHub</a></p>
+      </div>
+    </dialog>
+
+    <p id="attribution">Imagery <a href="https://s2maps.eu" target="_blank" rel="noopener">Sentinel-2 cloudless by EOX</a> · Terrain <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noopener">Mapzen</a> · Orbits <a href="https://celestrak.org/" target="_blank" rel="noopener">CelesTrak</a></p>
+
+#if SHOW_DIAGNOSTICS
+    <img id="diagnostics-icon" src="TemplateData/webmemd-icon.png" alt="Diagnostics">
+#endif
+
+    <script src="Build/{{{ LOADER_FILENAME }}}"></script>
+    <script>
+      const canvas = document.getElementById("unity-canvas");
+      const loader = document.getElementById("loader");
+      const fill = document.getElementById("progress-fill");
+      const percent = document.getElementById("percent");
+      const stage = document.getElementById("stage");
+      const hint = document.getElementById("hint");
+      const toolbar = document.getElementById("toolbar");
+      const about = document.getElementById("about");
+
+      (function drawStars() {
+        const stars = document.getElementById("stars");
+        const ratio = Math.min(window.devicePixelRatio || 1, 2);
+        const w = stars.width = innerWidth * ratio;
+        const h = stars.height = innerHeight * ratio;
+        const ctx = stars.getContext("2d");
+        const count = Math.round((innerWidth * innerHeight) / 2600);
+        for (let i = 0; i < count; i++) {
+          const r = Math.random() ** 3 * 1.4 + 0.25;
+          ctx.globalAlpha = 0.25 + Math.random() * 0.75;
+          ctx.fillStyle = Math.random() < 0.08 ? "#ffd27a" : "#dfe8ff";
+          ctx.beginPath();
+          ctx.arc(Math.random() * w, Math.random() * h, r * ratio, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      })();
+
+      if (matchMedia("(pointer: coarse)").matches) {
+        hint.textContent = "Made for mouse and keyboard. It runs on phones, but slowly.";
+      }
+
+      function setProgress(value) {
+        const p = Math.max(0, Math.min(1, value));
+        fill.style.transform = "scaleX(" + p + ")";
+        percent.textContent = Math.round(p * 100) + " %";
+        stage.textContent = p < 0.9 ? "Loading the engine" : "Starting the simulation";
+      }
+
+      function fail(message) {
+        loader.classList.add("failed");
+        fill.style.transform = "scaleX(1)";
+        stage.textContent = "SatTrak could not start";
+        percent.textContent = "";
+        hint.textContent = String(message || "Your browser may not support WebGL 2.");
+      }
+
+      let idleTimer;
+      function wakeToolbar() {
+        toolbar.classList.add("awake");
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => toolbar.classList.remove("awake"), 2500);
+      }
+      addEventListener("mousemove", wakeToolbar, { passive: true });
+      addEventListener("touchstart", wakeToolbar, { passive: true });
+
+      document.getElementById("fullscreen-button").addEventListener("click", () => {
+        if (document.fullscreenElement) document.exitFullscreen();
+        else document.documentElement.requestFullscreen().catch(() => {});
+        canvas.focus();
+      });
+
+      document.getElementById("info-button").addEventListener("click", () => about.showModal());
+      about.addEventListener("click", (e) => {
+        if (e.target === about || e.target.closest("[data-close]")) about.close();
+      });
+      about.addEventListener("close", () => canvas.focus());
+
+      createUnityInstance(canvas, {
+        arguments: [],
+#if PROGRESSIVE_ASSET_LOADING
+        primaryDataUrls: {{{ JSON.stringify(PRIMARY_DATA_FILES) }}},
+        secondaryDataUrls: {{{ JSON.stringify(SECONDARY_DATA_FILES) }}},
+#else
+        dataUrl: "Build/{{{ DATA_FILENAME }}}",
+#endif
+        frameworkUrl: "Build/{{{ FRAMEWORK_FILENAME }}}",
+#if USE_WASM
+        codeUrl: "Build/{{{ CODE_FILENAME }}}",
+#endif
+#if SYMBOLS_FILENAME
+        symbolsUrl: "Build/{{{ SYMBOLS_FILENAME }}}",
+#endif
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
+        productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
+        productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
+        devicePixelRatio: Math.min(window.devicePixelRatio || 1, 1.5),
+        showBanner: (message, type) => { if (type === "error") fail(message); },
+      }, setProgress).then((unityInstance) => {
+        setProgress(1);
+        document.body.classList.add("running");
+        setTimeout(() => loader.remove(), 900);
+        canvas.focus();
+        wakeToolbar();
+#if SHOW_DIAGNOSTICS
+        document.getElementById("diagnostics-icon").onclick = () => {
+          unityDiagnostics.openDiagnosticsDiv(unityInstance.GetMetricsInfo);
+        };
+#endif
+      }).catch(fail);
+    </script>
+  </body>
+</html>
