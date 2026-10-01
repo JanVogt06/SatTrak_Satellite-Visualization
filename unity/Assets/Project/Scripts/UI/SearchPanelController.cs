@@ -12,6 +12,7 @@ using UnityEngine.EventSystems;
 using System;
 using UnityEngine.Localization;
 using UnityEngine.Localization.Settings;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 public class SearchPanelController : MonoBehaviour
 {
@@ -149,19 +150,20 @@ public class SearchPanelController : MonoBehaviour
                .GetLocalizedString(table, key, args);
     }
 
-    void PopulateFilterDropdown()
+    IEnumerator PopulateFilterDropdown()
     {
-        filterDropdown.ClearOptions();
-        var opts = new List<TMP_Dropdown.OptionData>
+        var opts = new List<TMP_Dropdown.OptionData>();
+
+        foreach (string key in new[] { "gs.All", "gs.Famous", "gs.NameAsc", "gs.NameDesc", "gs.DistAsc", "gs.DistDesc" })
         {
-            new(L("GameScene", "gs.All")),
-            new(L("GameScene", "gs.Famous")),
-            new(L("GameScene", "gs.NameAsc")),
-            new(L("GameScene", "gs.NameDesc")),
-            new(L("GameScene", "gs.DistAsc")),
-            new(L("GameScene", "gs.DistDesc"))
-        };
-        filterDropdown.AddOptions(opts);
+            var op = LocalizationSettings.StringDatabase.GetLocalizedStringAsync("GameScene", key);
+            yield return op;
+
+            string label = op.Status == AsyncOperationStatus.Succeeded ? op.Result : null;
+            opts.Add(new TMP_Dropdown.OptionData(string.IsNullOrEmpty(label) ? key : label));
+        }
+
+        filterDropdown.options = opts;
         filterDropdown.RefreshShownValue();
     }
 
@@ -183,12 +185,12 @@ public class SearchPanelController : MonoBehaviour
 
         searchInputField.onValueChanged.AddListener(ApplySearchFilter);
 
-        PopulateFilterDropdown();
+        StartCoroutine(PopulateFilterDropdown());
         filterDropdown.onValueChanged.AddListener(OnFilterChanged);
 
         LocalizationSettings.SelectedLocaleChanged += _ =>
         {
-            PopulateFilterDropdown();
+            StartCoroutine(PopulateFilterDropdown());
 
             pageLabel.text = filteredSatelliteNames.Count == 0
                 ? L("GameScene", "NoResults")
