@@ -1,4 +1,6 @@
 using System;
+using Geo;
+using TimeExtensions = Satellites.SGP.Util.TimeExtensions;
 using UnityEngine;
 using Unity.Mathematics;
 using UnityEngine.UI;
@@ -11,6 +13,9 @@ public class DayNightSystem : MonoBehaviour
 
     [Tooltip("TimeSlider providing the current time")]
     public TimeSlider.TimeSlider timeSlider;
+
+    [Tooltip("Georeference that maps earth fixed directions into the scene")]
+    public Georeference georeference;
 
     [Tooltip("Optional earth material for shader effects")]
     public Material earthMaterial;
@@ -39,9 +44,6 @@ public class DayNightSystem : MonoBehaviour
     [Header("Debug")]
     public bool showDebugInfo = false;
 
-    private const float OBLIQUITY = 23.44f;
-    private const float DAYS_PER_YEAR = 365.25f;
-
     void Start()
     {
 
@@ -51,7 +53,10 @@ public class DayNightSystem : MonoBehaviour
         if (timeSlider == null)
             timeSlider = FindObjectOfType<TimeSlider.TimeSlider>();
 
-        if (sunLight == null || timeSlider == null)
+        if (georeference == null)
+            georeference = FindObjectOfType<Georeference>();
+
+        if (sunLight == null || timeSlider == null || georeference == null)
         {
             Debug.LogError("DayNightSystem: Fehlende References!");
             enabled = false;
@@ -66,7 +71,9 @@ public class DayNightSystem : MonoBehaviour
     {
         if (timeSlider == null) return;
 
-        Vector3 sunDirection = CalculateSunDirection(timeSlider.CurrentSimulatedTime);
+        var sunEcef = CalculateSunDirectionEcef(timeSlider.CurrentSimulatedTimeUtc);
+        var sunLocal = math.normalize(georeference.TransformEarthCenteredEarthFixedDirectionToUnity(sunEcef));
+        Vector3 sunDirection = new Vector3((float)sunLocal.x, (float)sunLocal.y, (float)sunLocal.z);
 
         sunLight.transform.rotation = Quaternion.LookRotation(-sunDirection);
 
@@ -88,26 +95,27 @@ public class DayNightSystem : MonoBehaviour
             ShowDebugInfo(sunDirection);
     }
 
-    Vector3 CalculateSunDirection(DateTime currentTime)
+    static double3 CalculateSunDirectionEcef(DateTime utc)
     {
+        double n = TimeExtensions.ToJulian(utc) - 2451545.0;
 
-        DateTime equinox = new DateTime(currentTime.Year, 3, 21);
-        double daysSinceEquinox = (currentTime - equinox).TotalDays;
+        double meanLongitude = math.radians(280.460 + 0.9856474 * n);
+        double meanAnomaly = math.radians(357.528 + 0.9856003 * n);
+        double eclipticLongitude = meanLongitude
+                                   + math.radians(1.915) * math.sin(meanAnomaly)
+                                   + math.radians(0.020) * math.sin(2.0 * meanAnomaly);
+        double obliquity = math.radians(23.439 - 0.0000004 * n);
 
-        double eclipticLongitude = (360.0 / DAYS_PER_YEAR) * daysSinceEquinox;
-        double eclipticLongitudeRad = eclipticLongitude * Mathf.Deg2Rad;
+        var eci = new double3(
+            math.cos(eclipticLongitude),
+            math.cos(obliquity) * math.sin(eclipticLongitude),
+            math.sin(obliquity) * math.sin(eclipticLongitude));
 
-        double declination = OBLIQUITY * Math.Sin(eclipticLongitudeRad);
-        double declinationRad = declination * Mathf.Deg2Rad;
-
-        double hourAngle = (currentTime.TimeOfDay.TotalHours - 12.0) * 15.0;
-        double hourAngleRad = hourAngle * Mathf.Deg2Rad;
-
-        float x = (float)(Math.Cos(declinationRad) * Math.Sin(hourAngleRad));
-        float y = (float)(Math.Sin(declinationRad));
-        float z = (float)(Math.Cos(declinationRad) * Math.Cos(hourAngleRad));
-
-        return new Vector3(x, y, z).normalized;
+        math.sincos(TimeExtensions.ToGreenwichSiderealTime(utc), out var sinTheta, out var cosTheta);
+        return new double3(
+            cosTheta * eci.x + sinTheta * eci.y,
+            -sinTheta * eci.x + cosTheta * eci.y,
+            eci.z);
     }
 
     void UpdateAmbientLighting(Vector3 sunDirection)
@@ -164,27 +172,21 @@ public class DayNightSystem : MonoBehaviour
 
         Debug.DrawRay(Vector3.zero, sunDirection * 10000000, Color.yellow);
 
-        DateTime current = timeSlider.CurrentSimulatedTime;
-        Debug.Log($"Time: {current:yyyy-MM-dd HH:mm:ss}");
+        DateTime current = timeSlider.CurrentSimulatedTimeUtc;
+        Debug.Log($"Time: {current:yyyy-MM-dd HH:mm:ss} UTC");
         Debug.Log($"Sun direction: {sunDirection}");
         Debug.Log($"Sun elevation: {Vector3.Dot(sunDirection, Vector3.up):F2}");
     }
 
     public float GetLocalSunElevation(double latitude, double longitude, DateTime time)
     {
-        Vector3 sunDir = CalculateSunDirection(time);
+        var sunEcef = CalculateSunDirectionEcef(time.ToUniversalTime());
 
-        float latRad = (float)(latitude * Mathf.Deg2Rad);
-        float lonRad = (float)(longitude * Mathf.Deg2Rad);
+        math.sincos(math.radians(latitude), out var sinLat, out var cosLat);
+        math.sincos(math.radians(longitude), out var sinLon, out var cosLon);
+        var up = new double3(cosLat * cosLon, cosLat * sinLon, sinLat);
 
-        Vector3 locationVector = new Vector3(
-            Mathf.Cos(latRad) * Mathf.Cos(lonRad),
-            Mathf.Sin(latRad),
-            Mathf.Cos(latRad) * Mathf.Sin(lonRad)
-        );
-
-        float elevation = Vector3.Dot(locationVector, sunDir);
-        return Mathf.Asin(elevation) * Mathf.Rad2Deg;
+        return (float)math.degrees(math.asin(math.dot(up, sunEcef)));
     }
 
     public bool IsDay(double latitude, double longitude, DateTime time)

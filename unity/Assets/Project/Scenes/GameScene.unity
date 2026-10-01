@@ -16551,6 +16551,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sunLight: {fileID: 410087040}
   timeSlider: {fileID: 568983495}
+  georeference: {fileID: 1786786860}
   earthMaterial: {fileID: 0}
   sunIntensity: 1.3
   sunColor: {r: 1, g: 0.95, b: 0.8, a: 1}
