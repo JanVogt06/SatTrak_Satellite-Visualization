@@ -17,7 +17,7 @@ The goal is to publish it as a WebGL build served from a container, installable 
 | Runs in the editor | yes, no account or API key needed |
 | WebGL build | works, 139 MB on disk, 51 MB first load, 5 to 10 minutes on a warm library |
 | Container | rebuilt on Unity 6 and verified end to end through nginx, music cache rule included |
-| Release | `v0.3.0` tagged, pipeline runs on `v*` tags; everything below is on `main`, untagged |
+| Release | `v0.3.0` is the last published release; the `v0.4.0` run failed in CI and published nothing |
 | Open blocker | none — the menu, the localization and the language switch all work in the browser |
 
 Cesium is gone, the TLE path no longer uses APIs WebGL lacks, and the asset budget has been
@@ -59,7 +59,7 @@ Add `unity/` as a project in Unity Hub. There is no token or config file to fill
 
 ## What changed
 
-95 commits, in eight blocks.
+101 commits, in nine blocks.
 
 **Cleanup.** The repository was restructured: `unity/Assets/Project` holds everything
 written for this project, `unity/Assets/ThirdParty` holds vendored assets. Dead code and
@@ -153,6 +153,9 @@ sphere looks right in any orientation. All three are fixed and verified in the b
 The terminator shader itself was fine — the port is line for line, and the strong blue of the
 night side is `_NightColor (0, 0, 1, 0.4)`, unchanged since the day/night system was written.
 
+**Terrain and the web page.** Earth mode streams real terrain and Sentinel-2 imagery without a
+key, and the Unity page is replaced by a SatTrak template. Both are written up under open items.
+
 **Performance and caching.** The ISS model now loads on demand, distant satellite models are
 hidden in earth mode, the build files carry content hashes, and the free fly speed follows the
 altitude. Each is written up below, under the asset budget and the open items.
@@ -238,9 +241,16 @@ the result as an artifact — use that to check a change before tagging. The fir
 one to three hours because the Unity library cache is cold; later runs reuse it.
 
 CI needs `UNITY_EMAIL`, `UNITY_PASSWORD` and `UNITY_LICENSE`. GameCI publishes
-`unityci/editor:ubuntu-6000.6.0f1-webgl-3`, so the image side of the upgrade is covered. The
-licence has only ever been exercised against 2022.3 in CI; the first tagged Unity 6 build is
-where that gets proven.
+`unityci/editor:ubuntu-6000.6.0f1-webgl-3`. The licence is proven on Unity 6: the `v0.4.0` run
+activated it and compiled the whole project.
+
+That run still failed, and the cause is worth knowing. With **Name Files As Hashes** turned on,
+Unity's build backend on the Linux runner re-ran its build program six times, each time
+because one of its own intermediate files had a new timestamp, and then gave up with
+*Internal build system error. Backend has requested a buildprogram run 6 times*. It is a known
+Unity bug tied to that setting, and it never happened on the Mac. The setting is off again;
+see the caching note under open items for what replaced it. `v0.4.0` published nothing — no
+image, no release — so the next tag is the first Unity 6 release.
 
 ## What the asset budget looks like
 
@@ -376,13 +386,15 @@ at that distance is around twenty pixels. Earth mode now runs at 33 frames per s
 **Space mode runs at 13 to 17 frames per second** on the same machine and was not looked into.
 Sixteen thousand `SatelliteModelController.Update` calls a frame are the first suspect.
 
-**The build files were cached for a year under fixed names — fixed.** nginx sends every
-`.br` file with `max-age=31536000, immutable`, but Unity named them `SatTrak.data.br`,
+**The build files were cached for a year under fixed names — fixed.** nginx sent every
+`.br` file with `max-age=31536000, immutable`, but Unity names them `SatTrak.data.br`,
 `SatTrak.wasm.br` and so on. After a release a returning browser fetched the new `index.html`
 and loader and kept the old engine: the request log showed `data.br` fetched again and
 `wasm.br` and `framework.js.br` not at all. Twice in testing that combination hung the page
-before the menu. `webGLNameFilesAsHashes` is now on, so a new build means new URLs, and
-`BuildWebGL.Run` empties the `Build` folder first so old hashes do not pile up in the image.
+before the menu. The first fix, content hashed file names, breaks the CI build (see the release
+section), so the files keep their names and nginx now sends them with `no-cache`. The browser
+asks on every visit and gets a body-less 304 unless the build changed. `BuildWebGL.Run` still
+empties the `Build` folder first, which costs nothing and keeps stale files out of the image.
 
 **The free fly speed follows the altitude now.** `FreeFlyCamera` moves at a tenth of its
 altitude per second, never slower than 100 m/s, and `Shift` multiplies that by ten: 25 km/s at
@@ -407,31 +419,55 @@ changing tracking should replace it with a geodetic position from SGP4 rather th
 In one of five test runs the camera ended up next to the satellites around the ISS rather than
 on it. That run could not be repeated.
 
-**The earth mode has no terrain.** Cesium streamed 3D tiles; the globe is now an ellipsoid
-with one 4K NASA Blue Marble texture. City search, fly-to, free-fly, day/night and the
-heatmap all work, but there is no street level detail. At 1000 m altitude the whole screen
-covered 0.38 texels, which is why `GeoNamesSearchFromJSON.earthViewAltitude` defaults to
-250 km. Below roughly 50 km it stops being useful.
+**Terrain is in, without Cesium and without a key.** The requirement was that every visitor
+sees terrain, that nobody needs a token, and that it costs the operator nothing. Cesium ion
+fails the last two: its free Community plan wants a token in the page and covers 15 GB of
+streaming a month, after which a paid plan is expected. Cesium for Unity on the web would also
+have needed cross-origin isolation, which means HTTPS for anyone pulling the container.
 
-**Globe tessellation** is 256x128 segments, so one segment spans 156 km at the equator. Fine
-from orbit; the horizon reads as a straight edge up close. Adjustable on `EarthGlobe`.
+What ships instead is `Geo/TerrainTiles` and three helpers, about 670 lines with the shader, fed by two open tile services that
+browsers fetch directly — no account, no key, CORS open, nothing proxied through the container:
 
-**Cesium for Unity can reach the web now**, which is why the Unity 6 upgrade was worth doing.
-As of Cesium for Unity v1.20.0 (March 2026) the plugin builds for the web on Unity 6 or
-later, over WebGL as well as WebGPU, and streams 3D Tiles terrain. That is the one thing the
-hand-written globe cannot do. `Georeference` was deliberately written as a drop-in for
-`CesiumGeoreference`, so the swap does not disturb `Wgs84`, `GlobeAnchor` or any satellite
-code.
+| | Source | Licence |
+| --- | --- | --- |
+| Elevation | Mapzen Terrain Tiles on AWS Open Data, Terrarium PNG, `{z}/{x}/{y}` | open, attribution |
+| Imagery | EOX Sentinel-2 cloudless 2016, layer `s2cloudless_3857` | CC BY 4.0 |
 
-Three conditions come with it, and none are free. It is experimental by Cesium's own label.
-It requires Native C/C++ Multithreading, which means the server must send
-`Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Embedder-Policy: require-corp` and
-`Cross-Origin-Resource-Policy: cross-origin` — and cross-origin isolation needs a secure
-context, so `http://localhost:8003` works but a plain-HTTP LAN address does not. That would
-weaken the `docker compose pull` promise for anyone without a TLS proxy. And the Cesium ion
-token returns, which for a publicly pulled container means every visitor streams against one
-account's quota. That last point is unrelated to Unity — CesiumJS would raise it too — but it
-has to be answered before terrain is worth starting.
+Use the 2016 layer specifically. EOX's later years are CC BY-NC-SA, which would make the
+project non-commercial. Both URLs are inspector fields on `TerrainTiles`. Both services ask
+for attribution: a line in the page's top left credits EOX, Mapzen and CelesTrak, and the info
+dialog carries the full list of Mapzen's upstream sources. Either service could change its terms
+or go away; the globe underneath is still there when that happens, it just stays blurry.
+
+How it works: below 1500 km altitude, `TerrainTiles` picks Web Mercator tiles in a quadtree —
+roots at zoom 5 around the camera, split while the camera is closer than 3.5 tile widths, down
+to zoom 14 — and drops anything past the horizon. Each tile is a 33x33 grid built in WGS84 ECEF
+through `Georeference`, so it lines up with the globe and the satellites, and it is rebuilt when
+the origin moves. Skirts hide cracks between levels. Four levels coarser than every wanted tile
+a cover tile loads first, so the view is covered at once and sharpens as finer tiles arrive;
+coarse stand-ins sink one percent of their width below the finer ones instead of fighting them
+for depth. `TerrainTile.shader` multiplies the imagery by the sun's Lambert term, with a depth
+offset so terrain at sea level wins over the ellipsoid.
+
+Measured from 40 km over Denver on the M3: 234 tile requests, the screen covered after four
+seconds, sharp to the horizon after thirty, 30 frames per second. The city fly-to altitude came
+down from 250 km to 40 km because the view now holds up there.
+
+Not done: no water mask, so sea level is flat imagery; no terrain collision; heights below
+zero are clamped, so the Dead Sea is flat; and the imagery is 2016.
+
+**The web page is SatTrak's own now.** `unity/Assets/WebGLTemplates/SatTrak` replaces Unity's
+default page, selected through `webGLTemplate: PROJECT:SatTrak`. It fills the window, shows a
+loading screen in the game's style — thin white corner brackets, amber accent, League Spartan,
+a starfield and a glowing horizon — and reports failures on the page instead of in an
+`alert`. After loading, a fullscreen and an info button fade in at the top right, and the info
+dialog carries controls and data credits. The font is self-hosted as subset WOFF files (SIL
+OFL); Google Fonts was left out on purpose, because embedding it is a GDPR problem in Germany.
+Unity's own splash screen is off, which Unity 6 allows on every licence. The render resolution
+is capped at 1.5x the CSS pixel size to keep high DPI screens from costing frame rate.
+
+**Globe tessellation** is 256x128 segments, so one segment spans 156 km at the equator. It now
+only shows beyond the terrain, which hides it below 1500 km. Adjustable on `EarthGlobe`.
 
 **The missing lighting settings asset is gone.** `GameScene` pointed at GUID
 `8bdf27f6e3fbb4f2f9f891fbf3dbf399`, which does not exist; it is now `{fileID: 0}`, matching
