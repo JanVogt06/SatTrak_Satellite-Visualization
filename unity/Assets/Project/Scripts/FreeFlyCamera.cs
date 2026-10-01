@@ -1,5 +1,7 @@
+using Geo;
 using Satellites;
 using TMPro;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -42,12 +44,20 @@ public class FreeFlyCamera : MonoBehaviour
     private bool _enableMovement = true;
 
     [SerializeField]
-    [Tooltip("Camera movement speed")]
-    private float _movementSpeed = 100f;
+    [Tooltip("Lowest camera movement speed in metres per second, used close to the ground")]
+    private float _minimumSpeed = 100f;
 
     [SerializeField]
-    [Tooltip("Speed of the quick camera movement when holding the 'Left Shift' key")]
-    private float _boostedSpeed = 200f;
+    [Tooltip("Camera movement speed per metre of altitude, so the ground passes at the same rate at any height")]
+    private float _speedPerAltitude = 0.1f;
+
+    [SerializeField]
+    [Tooltip("Speed multiplier while holding the 'Left Shift' key")]
+    private float _boostFactor = 10f;
+
+    [SerializeField]
+    [Tooltip("Georeference used to measure the altitude above the ellipsoid")]
+    private Georeference _georeference;
 
     [SerializeField]
     [Tooltip("Boost speed")]
@@ -107,14 +117,6 @@ public class FreeFlyCamera : MonoBehaviour
 
     public bool cameraModeAllowed = true;
     public bool inspectorModeAllowed = true;
-
-#if UNITY_EDITOR
-    private void OnValidate()
-    {
-        if (_boostedSpeed < _movementSpeed)
-            _boostedSpeed = _movementSpeed;
-    }
-#endif
 
     private void Start()
     {
@@ -293,7 +295,9 @@ public class FreeFlyCamera : MonoBehaviour
 
         if (_movementInput != Vector3.zero)
         {
-            float currentSpeed = Input.GetKey(_boostSpeed) ? _boostedSpeed : _movementSpeed;
+            float currentSpeed = Mathf.Max(_minimumSpeed, Altitude() * _speedPerAltitude);
+            if (Input.GetKey(_boostSpeed))
+                currentSpeed *= _boostFactor;
             CalculateCurrentIncrease(true);
 
             transform.Translate(_movementInput.normalized * currentSpeed * _currentIncrease, Space.Self);
@@ -302,6 +306,16 @@ public class FreeFlyCamera : MonoBehaviour
         {
             CalculateCurrentIncrease(false);
         }
+    }
+
+    private float Altitude()
+    {
+        if (_georeference == null)
+            return 0f;
+
+        var p = transform.position;
+        var ecef = _georeference.TransformUnityPositionToEarthCenteredEarthFixed(new double3(p.x, p.y, p.z));
+        return Mathf.Max(0f, (float)Wgs84.EcefToLongitudeLatitudeHeight(ecef).z);
     }
 
     public void SyncInitTransform()
