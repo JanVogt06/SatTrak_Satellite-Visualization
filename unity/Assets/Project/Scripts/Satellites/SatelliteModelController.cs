@@ -14,6 +14,10 @@ namespace Satellites
         [Tooltip("FOV threshold for switching modes")]
         public float fovThreshold = 70f;
 
+        [Header("Earth Mode")]
+        [Tooltip("Camera distance in metres beyond which the model is hidden in earth mode")]
+        public float earthModeModelDistance = 2000000f;
+
         [Header("On Demand Model")]
         [Tooltip("Camera distance in metres below which the on demand model starts loading")]
         public float onDemandLoadDistance = 5000000f;
@@ -26,6 +30,7 @@ namespace Satellites
         private GameObject _spaceSphere;
         private Material _spaceMaterial;
         private bool _lastMode;
+        private bool _lastModelVisible;
 
         private bool _isISS;
         private bool _isSpecial;
@@ -48,14 +53,17 @@ namespace Satellites
         void Update()
         {
             if (!zoomController || !zoomController.targetCamera) return;
-            bool isEarthMode = zoomController.targetCamera.fieldOfView < fovThreshold;
+            var camera = zoomController.targetCamera;
+            bool isEarthMode = camera.fieldOfView < fovThreshold;
+            float sqrDistance = (camera.transform.position - transform.position).sqrMagnitude;
 
-            if (isEarthMode && _onDemandModelUrl != null &&
-                Vector3.Distance(zoomController.targetCamera.transform.position, transform.position) < onDemandLoadDistance)
+            if (isEarthMode && _onDemandModelUrl != null && sqrDistance < onDemandLoadDistance * onDemandLoadDistance)
                 LoadOnDemandModel();
 
-            if (isEarthMode == _lastMode) return;
+            bool modelVisible = isEarthMode && sqrDistance < earthModeModelDistance * earthModeModelDistance;
+            if (isEarthMode == _lastMode && modelVisible == _lastModelVisible) return;
             _lastMode = isEarthMode;
+            _lastModelVisible = modelVisible;
             UpdateVisibility();
         }
 
@@ -261,10 +269,13 @@ namespace Satellites
         {
             if (_modelInstance == null || _spaceSphere == null) return;
 
-            bool isEarthMode = zoomController && zoomController.targetCamera &&
-                               zoomController.targetCamera.fieldOfView < fovThreshold;
+            var camera = zoomController ? zoomController.targetCamera : null;
+            bool isEarthMode = camera && camera.fieldOfView < fovThreshold;
+            bool modelVisible = isEarthMode &&
+                                (camera.transform.position - transform.position).sqrMagnitude <
+                                earthModeModelDistance * earthModeModelDistance;
 
-            _modelInstance.SetActive(isEarthMode);
+            _modelInstance.SetActive(modelVisible);
             _spaceSphere.SetActive(!isEarthMode);
         }
 
