@@ -47,7 +47,7 @@ public class GeoNamesSearchFromJSON : MonoBehaviour
     public int itemsPerPage = 20;
 
     [Tooltip("Camera altitude in meters when flying to a city")]
-    public double earthViewAltitude = 250000;
+    public double earthViewAltitude = 40000;
 
     private readonly Dictionary<string, LocationEntry> _lookup = new();
 

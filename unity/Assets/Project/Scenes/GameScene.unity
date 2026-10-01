@@ -4265,7 +4265,7 @@ MonoBehaviour:
   zoomController: {fileID: 1952269538}
   georeference: {fileID: 1786786860}
   itemsPerPage: 20
-  earthViewAltitude: 250000
+  earthViewAltitude: 40000
   foundPlacesText: {fileID: 1310393167}
 --- !u!114 &308697202
 MonoBehaviour:
