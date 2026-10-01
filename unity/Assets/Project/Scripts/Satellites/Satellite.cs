@@ -23,7 +23,7 @@ namespace Satellites
         private static readonly int[] FAMOUS_NORAD_IDS = { 20580, 56217, 46984, 63147 };
 
         public bool Init(Tle tle, GameObject[] satelliteModelPrefabs, Material globalSpaceMaterial,
-                         GameObject issModelPrefab = null, Dictionary<int, GameObject> famousModelPrefabs = null)
+                         string issModelUrl = null, Dictionary<int, GameObject> famousModelPrefabs = null)
         {
             name = tle.NoradNumber + " " + tle.Name;
             Tle = tle;
@@ -37,16 +37,13 @@ namespace Satellites
             orbit.Initialize(OrbitPropagator);
 
             GameObject specialModel = null;
-            if (IsISS && issModelPrefab != null)
-            {
-                specialModel = issModelPrefab;
-            }
-            else if (IsFamous && famousModelPrefabs != null && famousModelPrefabs.ContainsKey(NoradId))
+            if (IsFamous && famousModelPrefabs != null && famousModelPrefabs.ContainsKey(NoradId))
             {
                 specialModel = famousModelPrefabs[NoradId];
             }
 
-            return modelController.SetModel(satelliteModelPrefabs, globalSpaceMaterial, IsISS || IsFamous, specialModel);
+            return modelController.SetModel(satelliteModelPrefabs, globalSpaceMaterial, IsISS || IsFamous, specialModel,
+                                            IsISS ? issModelUrl : null);
         }
     }
 }

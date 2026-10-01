@@ -15431,8 +15431,7 @@ MonoBehaviour:
   - {fileID: -8148156210950934553, guid: ec36ff2c43aeea34f89921e2abee9781, type: 3}
   - {fileID: -8148156210950934553, guid: 06b219be039543a4fae4f2d49713bb57, type: 3}
   - {fileID: -6689036041284674117, guid: 9708021a127d9454da2ed597f0674874, type: 3}
-  issModelPrefab: {fileID: 8771091787928289351, guid: 731c7786f65424293a1683636aa845d7,
-    type: 3}
+  issModelFile: models/ISS_stationary.glb
   hubbleModelPrefab: {fileID: -8148156210950934553, guid: ed729486238d94550b316e9ee0a3ef79,
     type: 3}
   keplerModelPrefab: {fileID: -8148156210950934553, guid: 4a3cbe0297984e8458231450c31dd530,

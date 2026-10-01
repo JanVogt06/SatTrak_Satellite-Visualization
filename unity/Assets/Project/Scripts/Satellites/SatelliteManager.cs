@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Geo;
 using Heatmap;
@@ -39,8 +40,8 @@ namespace Satellites
         [Tooltip("Available satellite models")]
         public GameObject[] satelliteModelPrefabs;
 
-        [Tooltip("Dedicated ISS model")]
-        public GameObject issModelPrefab;
+        [Tooltip("Dedicated ISS model below StreamingAssets, loaded when the camera first gets close")]
+        public string issModelFile = "models/ISS_stationary.glb";
 
         [Header("Famous Satellite Models")]
         [Tooltip("Hubble Space Telescope Model")]
@@ -72,6 +73,10 @@ namespace Satellites
         private JobHandle _handle;
 
         public bool satellitesActive = true;
+
+        private string IssModelUrl => string.IsNullOrEmpty(issModelFile)
+            ? null
+            : Path.Combine(Application.streamingAssetsPath, issModelFile);
 
         private bool _ready;
 
@@ -217,7 +222,7 @@ namespace Satellites
             try
             {
                 modelApplied = satellite.Init(tle, satelliteModelPrefabs, globalSpaceMaterial,
-                                              issModelPrefab, famousModelPrefabs);
+                                              IssModelUrl, famousModelPrefabs);
             }
             catch (Exception e)
             {

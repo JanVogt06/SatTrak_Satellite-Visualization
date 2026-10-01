@@ -4,3 +4,4 @@ unity/Assets/StreamingAssets/tle/*.txt -text
 art-source/**/*.glb filter=lfs diff=lfs merge=lfs -text
 art-source/audio/*.mp3 filter=lfs diff=lfs merge=lfs -text
 unity/Assets/StreamingAssets/music/*.mp3 filter=lfs diff=lfs merge=lfs -text
+unity/Assets/StreamingAssets/models/*.glb filter=lfs diff=lfs merge=lfs -text

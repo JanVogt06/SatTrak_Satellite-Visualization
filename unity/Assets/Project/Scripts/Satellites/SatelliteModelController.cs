@@ -1,3 +1,5 @@
+using GLTFast;
+using GLTFast.Logging;
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -12,6 +14,10 @@ namespace Satellites
         [Tooltip("FOV threshold for switching modes")]
         public float fovThreshold = 70f;
 
+        [Header("On Demand Model")]
+        [Tooltip("Camera distance in metres below which the on demand model starts loading")]
+        public float onDemandLoadDistance = 5000000f;
+
         [Header("Space Mode")]
         [Tooltip("Sphere size in space mode")]
         public float sphereSize = 20000f;
@@ -23,6 +29,9 @@ namespace Satellites
 
         private bool _isISS;
         private bool _isSpecial;
+
+        private string _onDemandModelUrl;
+        private GltfImport _onDemandImport;
 
         [Header("Highlight")]
         public Material highlightMaterial;
@@ -40,6 +49,11 @@ namespace Satellites
         {
             if (!zoomController || !zoomController.targetCamera) return;
             bool isEarthMode = zoomController.targetCamera.fieldOfView < fovThreshold;
+
+            if (isEarthMode && _onDemandModelUrl != null &&
+                Vector3.Distance(zoomController.targetCamera.transform.position, transform.position) < onDemandLoadDistance)
+                LoadOnDemandModel();
+
             if (isEarthMode == _lastMode) return;
             _lastMode = isEarthMode;
             UpdateVisibility();
@@ -71,30 +85,20 @@ namespace Satellites
         }
 
         public bool SetModel(GameObject[] satelliteModelPrefabs, Material globalSpaceMaterial,
-                            bool isSpecial = false, GameObject specialModelPrefab = null)
+                            bool isSpecial = false, GameObject specialModelPrefab = null,
+                            string onDemandModelUrl = null)
         {
             _isSpecial = isSpecial;
-            _isISS = false;
+            _onDemandModelUrl = onDemandModelUrl;
+
+            var satellite = GetComponentInParent<Satellite>();
+            _isISS = satellite != null && satellite.IsISS;
 
             GameObject modelToUse;
 
             if (_isSpecial && specialModelPrefab != null)
             {
                 modelToUse = specialModelPrefab;
-
-                var satellite = GetComponent<Satellite>();
-                if (satellite == null)
-                    satellite = GetComponentInParent<Satellite>();
-                if (satellite == null && transform.parent != null)
-                    satellite = transform.parent.GetComponent<Satellite>();
-
-                if (satellite != null)
-                {
-                    if (satellite.IsISS)
-                    {
-                        _isISS = true;
-                    }
-                }
             }
             else
             {
@@ -119,15 +123,51 @@ namespace Satellites
             return prefab != null;
         }
 
+        private async void LoadOnDemandModel()
+        {
+            var url = _onDemandModelUrl;
+            _onDemandModelUrl = null;
+
+            var import = new GltfImport(deferAgent: new UninterruptedDeferAgent(), logger: new ConsoleLogger());
+            var root = new GameObject("OnDemandModel");
+            root.transform.SetParent(transform, false);
+
+            if (!await import.Load(url) || this == null || !await import.InstantiateMainSceneAsync(root.transform))
+            {
+                Debug.LogError($"[SatelliteModelController] Could not load {url}");
+                import.Dispose();
+                if (root != null) Destroy(root);
+                return;
+            }
+
+            if (this == null)
+            {
+                import.Dispose();
+                return;
+            }
+
+            _onDemandImport = import;
+            if (TryUseModelInstance(root))
+            {
+                Debug.Log($"[SatelliteModelController] Loaded {url}");
+                UpdateVisibility();
+            }
+        }
+
         private bool TryApplyModel(GameObject modelPrefab, Material globalSpaceMaterial)
         {
+            _spaceMaterial = globalSpaceMaterial;
+            return TryUseModelInstance(Instantiate(modelPrefab, transform));
+        }
 
+        private bool TryUseModelInstance(GameObject instance)
+        {
             if (_modelInstance != null)
             {
                 Destroy(_modelInstance);
             }
 
-            _modelInstance = Instantiate(modelPrefab, transform);
+            _modelInstance = instance;
             _modelInstance.transform.localPosition = Vector3.zero;
             _modelInstance.transform.localRotation = Quaternion.identity;
 
@@ -137,8 +177,6 @@ namespace Satellites
                 Destroy(_modelInstance);
                 return false;
             }
-
-            _spaceMaterial = globalSpaceMaterial;
 
             NormalizeSatelliteSize();
 
@@ -236,6 +274,8 @@ namespace Satellites
                 Destroy(_modelInstance);
             if (_spaceSphere != null)
                 Destroy(_spaceSphere);
+            _onDemandImport?.Dispose();
         }
     }
+
 }
