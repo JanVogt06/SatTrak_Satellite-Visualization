@@ -7,6 +7,7 @@ COPY docker/entrypoint.sh /entrypoint.sh
 COPY build/WebGL/SatTrak/ /usr/share/nginx/html/
 
 RUN chmod +x /entrypoint.sh \
+ && gzip -9 -k /usr/share/nginx/html/StreamingAssets/models/*.glb \
  && chmod -R a+rX /usr/share/nginx/html
 
 EXPOSE 80
