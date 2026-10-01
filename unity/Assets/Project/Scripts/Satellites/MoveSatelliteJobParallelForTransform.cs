@@ -21,8 +21,8 @@ namespace Satellites
             Vector3 position;
             try
             {
-                var pos = OrbitPropagator[index].FindPosition(tsince).ToSphericalEcef();
-                position = (math.mul(EcefToLocalMatrix, new double4(pos.ToDouble(), 1.0)).xyz).ToVector();
+                var ecef = OrbitPropagator[index].FindPosition(tsince).ToEcef();
+                position = (math.mul(EcefToLocalMatrix, new double4(ecef, 1.0)).xyz).ToVector();
             }
             catch (Exception e)
             {

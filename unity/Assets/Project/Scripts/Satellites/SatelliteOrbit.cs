@@ -65,10 +65,9 @@ namespace Satellites
             var positions = new List<Vector3>();
             for (TimeSpan i = TimeSpan.Zero; i < until; i = i.Add(stepSize))
             {
-                var pos = _orbitPropagator.FindPosition(time.CurrentSimulatedTime.Add(i))
-                    .ToSphericalEcef();
+                var ecef = _orbitPropagator.FindPosition(time.CurrentSimulatedTimeUtc.Add(i)).ToEcef();
                 var position = math.mul(SatelliteManager.Instance.georeference.ecefToLocalMatrix,
-                    new double4(pos.ToDouble(), 1.0)).xyz;
+                    new double4(ecef, 1.0)).xyz;
                 positions.Add(position.ToVector());
             }
 
