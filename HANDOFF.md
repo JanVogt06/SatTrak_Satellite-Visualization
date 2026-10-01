@@ -59,7 +59,7 @@ Add `unity/` as a project in Unity Hub. There is no token or config file to fill
 
 ## What changed
 
-101 commits, in nine blocks.
+103 commits, in nine blocks.
 
 **Cleanup.** The repository was restructured: `unity/Assets/Project` holds everything
 written for this project, `unity/Assets/ThirdParty` holds vendored assets. Dead code and
@@ -249,8 +249,10 @@ Unity's build backend on the Linux runner re-ran its build program six times, ea
 because one of its own intermediate files had a new timestamp, and then gave up with
 *Internal build system error. Backend has requested a buildprogram run 6 times*. It is a known
 Unity bug tied to that setting, and it never happened on the Mac. The setting is off again;
-see the caching note under open items for what replaced it. `v0.4.0` published nothing — no
-image, no release — so the next tag is the first Unity 6 release.
+see the caching note under open items for what replaced it. A manual run on `main` with the
+setting off then built cleanly in 36 minutes on a warm cache: 138 MB, no errors, two backend
+reruns instead of six. `v0.4.0` published nothing — no image, no release — so the next tag is
+the first Unity 6 release.
 
 ## What the asset budget looks like
 
