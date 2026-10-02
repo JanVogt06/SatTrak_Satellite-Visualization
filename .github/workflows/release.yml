@@ -47,6 +47,7 @@ jobs:
           targetPlatform: WebGL
           unityVersion: 6000.6.0f1
           buildMethod: BuildWebGL.Run
+          customParameters: -sattrakVersion ${{ github.ref_type == 'tag' && github.ref_name || format('dev-{0}', github.sha) }}
           allowDirtyBuild: true
 
       - name: Upload build artifact

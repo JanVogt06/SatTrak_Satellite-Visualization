@@ -33,6 +33,9 @@ public class MenuManager : MonoBehaviour
     private const string PrefKey = "ShowFPS";
 
     public TMP_Dropdown languageDropdown;
+
+    [Tooltip("Shows the build version, which BuildWebGL takes from the release tag")]
+    public TMP_Text versionText;
     private const string LocalePrefKey = "LocaleIndex";
 
     private static readonly string[] LocaleCodes = { "en", "de" };
@@ -43,6 +46,9 @@ public class MenuManager : MonoBehaviour
 
     void Start()
     {
+        if (versionText != null)
+            versionText.text = $"Version: {Application.version}";
+
         showFpsToggle.isOn = PlayerPrefs.GetInt(PrefKey, 0) == 1;
 
         showFpsToggle.onValueChanged.AddListener(OnToggleChanged);

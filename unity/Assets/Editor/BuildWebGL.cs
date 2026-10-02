@@ -12,6 +12,10 @@ public static class BuildWebGL
 
     public static void Run()
     {
+        var previousVersion = PlayerSettings.bundleVersion;
+        PlayerSettings.bundleVersion = ResolveVersion();
+        Debug.Log($"BUILD version: {PlayerSettings.bundleVersion}");
+
         var staleBuild = Path.Combine(OutputPath, "Build");
         if (Directory.Exists(staleBuild))
             Directory.Delete(staleBuild, true);
@@ -52,7 +56,43 @@ public static class BuildWebGL
         if (summary.result == BuildResult.Succeeded)
             StampBuildId();
 
+        PlayerSettings.bundleVersion = previousVersion;
+
         EditorApplication.Exit(summary.result == BuildResult.Succeeded ? 0 : 1);
+    }
+
+    private static string ResolveVersion()
+    {
+        var args = Environment.GetCommandLineArgs();
+        int index = Array.IndexOf(args, "-sattrakVersion");
+        var version = index >= 0 && index + 1 < args.Length ? args[index + 1] : GitDescribe();
+
+        if (string.IsNullOrWhiteSpace(version)) return "dev";
+        version = version.Trim();
+        if (version.StartsWith("dev-") && version.Length > 11) return version.Substring(0, 11);
+        return version.StartsWith("v") && version.Length > 1 && char.IsDigit(version[1]) ? version.Substring(1) : version;
+    }
+
+    private static string GitDescribe()
+    {
+        try
+        {
+            var process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "git",
+                Arguments = "describe --tags --always --dirty",
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            });
+            var output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit();
+            return process.ExitCode == 0 ? output : null;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
 
     private static void StampBuildId()
