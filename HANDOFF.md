@@ -410,6 +410,27 @@ container to the new build on the same port, reload — all four files are fetch
 menu is correct. Unity's own IndexedDB cache was never the problem; it already revalidates the
 data file and the Addressables bundles.
 
+**Plain HTTP on a LAN address broke the page twice over — fixed.** Everything above was tested
+on `localhost`, which browsers treat as a secure context. A real home server is
+`http://192.168.x.y`, and there two different things fail:
+
+- *Chrome refuses Brotli without HTTPS.* It does not offer `br` in `Accept-Encoding` on an
+  insecure origin and aborts with `ERR_CONTENT_DECODING_FAILED` when it gets it anyway. Safari
+  decodes it. The Dockerfile now writes a gzip copy next to every `Build/*.br` file, and nginx
+  serves the Brotli file to browsers that ask for `br` and rewrites to the `.br.gz` copy for
+  everyone else, with `Vary: Accept-Encoding`. Over HTTP the first load is about 61 MB instead
+  of 51.
+- *Unity blocks its own requests over HTTP.* `insecureHttpOption` defaulted to *not allowed*,
+  which makes every `UnityWebRequest` to an `http://` URL fail with *Insecure connection not
+  allowed* — except on `localhost`. That took out the Addressables, so the string tables never
+  loaded and every label read *No translation found for 'Key Id …'*, and it would have taken
+  out the TLE file, the music and the ISS model too. It is now *always allowed*. The terrain
+  services are HTTPS and were never affected.
+
+This, not the stale cache, is almost certainly what the first deployment showed in Safari.
+Both are fixed. **Test against a LAN IP, not `localhost`**, before trusting a web build:
+`http://<the Mac's LAN address>:8003` in Chrome is enough to see both faults.
+
 **The free fly speed follows the altitude now.** `FreeFlyCamera` moves at a tenth of its
 altitude per second, never slower than 100 m/s, and `Shift` multiplies that by ten: 25 km/s at
 the 250 km fly-to altitude, 100 m/s near the ground. The old note claimed a cubic acceleration
