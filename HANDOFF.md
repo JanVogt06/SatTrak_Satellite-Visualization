@@ -398,6 +398,18 @@ section), so the files keep their names and nginx now sends them with `no-cache`
 asks on every visit and gets a body-less 304 unless the build changed. `BuildWebGL.Run` still
 empties the `Build` folder first, which costs nothing and keeps stale files out of the image.
 
+`no-cache` alone did not save anyone who had visited before. Browsers keep the old
+`immutable` entries for a year no matter what the server says later, and the first real
+deployment of `v0.4.1` showed it: a Safari that had seen an older version loaded the old engine
+against the new data and printed *No translation found for 'Key Id …'* on every label, and in a
+reproduction the same mix crashed with a stack overflow. Only a new URL gets past such an entry.
+`BuildWebGL.Run` now hashes the files in `Build/` and writes the first twelve hex digits into
+`index.html` in place of `__BUILD_ID__`, so every build loads `SatTrak.wasm.br?v=…` and friends
+from a URL no browser has cached. Reproduced and fixed the same way: load `0.3.0`, switch the
+container to the new build on the same port, reload — all four files are fetched again and the
+menu is correct. Unity's own IndexedDB cache was never the problem; it already revalidates the
+data file and the Addressables bundles.
+
 **The free fly speed follows the altitude now.** `FreeFlyCamera` moves at a tenth of its
 altitude per second, never slower than 100 m/s, and `Shift` multiplies that by ten: 25 km/s at
 the 250 km fly-to altitude, 100 m/s near the ground. The old note claimed a cubic acceleration
