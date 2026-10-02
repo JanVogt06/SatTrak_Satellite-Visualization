@@ -219,6 +219,12 @@ before a release so the bundled fallback is not stale.
 
 ## How a release works
 
+The version follows the tag on its own. The workflow passes `-sattrakVersion <tag>` to
+`BuildWebGL.Run`, which sets `PlayerSettings.bundleVersion` for the build and puts the old value
+back afterwards, so nothing is committed. `v0.4.4` shows as `Version: 0.4.4` in the main menu,
+in the page's info dialog and as Unity's `productVersion`. Manual runs show `dev-<commit>`;
+local builds without the argument use `git describe`. Do not type a version anywhere.
+
 Tagging is the whole process:
 
 ```bash
