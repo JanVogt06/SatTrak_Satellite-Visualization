@@ -115,7 +115,7 @@
     <img id="diagnostics-icon" src="TemplateData/webmemd-icon.png" alt="Diagnostics">
 #endif
 
-    <script src="Build/{{{ LOADER_FILENAME }}}"></script>
+    <script src="Build/{{{ LOADER_FILENAME }}}?v=__BUILD_ID__"></script>
     <script>
       const canvas = document.getElementById("unity-canvas");
       const loader = document.getElementById("loader");
@@ -189,11 +189,11 @@
         primaryDataUrls: {{{ JSON.stringify(PRIMARY_DATA_FILES) }}},
         secondaryDataUrls: {{{ JSON.stringify(SECONDARY_DATA_FILES) }}},
 #else
-        dataUrl: "Build/{{{ DATA_FILENAME }}}",
+        dataUrl: "Build/{{{ DATA_FILENAME }}}?v=__BUILD_ID__",
 #endif
-        frameworkUrl: "Build/{{{ FRAMEWORK_FILENAME }}}",
+        frameworkUrl: "Build/{{{ FRAMEWORK_FILENAME }}}?v=__BUILD_ID__",
 #if USE_WASM
-        codeUrl: "Build/{{{ CODE_FILENAME }}}",
+        codeUrl: "Build/{{{ CODE_FILENAME }}}?v=__BUILD_ID__",
 #endif
 #if SYMBOLS_FILENAME
         symbolsUrl: "Build/{{{ SYMBOLS_FILENAME }}}",

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
@@ -48,6 +49,25 @@ public static class BuildWebGL
             }
         }
 
+        if (summary.result == BuildResult.Succeeded)
+            StampBuildId();
+
         EditorApplication.Exit(summary.result == BuildResult.Succeeded ? 0 : 1);
+    }
+
+    private static void StampBuildId()
+    {
+        using var sha = SHA256.Create();
+        foreach (var file in Directory.GetFiles(Path.Combine(OutputPath, "Build")).OrderBy(f => f, StringComparer.Ordinal))
+        {
+            var bytes = File.ReadAllBytes(file);
+            sha.TransformBlock(bytes, 0, bytes.Length, null, 0);
+        }
+        sha.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
+
+        var id = BitConverter.ToString(sha.Hash).Replace("-", "").Substring(0, 12).ToLowerInvariant();
+        var index = Path.Combine(OutputPath, "index.html");
+        File.WriteAllText(index, File.ReadAllText(index).Replace("__BUILD_ID__", id));
+        Debug.Log($"BUILD id: {id}");
     }
 }
